@@ -13,6 +13,7 @@ async def start_up():
     await db_connect()
     #  Загружаем ID администраторов прямо из основной группы
     await admin_list_load()
+    # Запускаем очередь га модерацию
 
     # Стартуем! Я начну стрелять!
     # with open('bot.log', 'a') as log_file:
