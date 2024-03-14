@@ -9,7 +9,7 @@ class QueueForModeration:
     def __init__(self):
         self.ads_list = list()
 
-    async def add_ads_in_queue(self, user_id: int, text: str, mediafile: list, public_time: str, validity: int):
+    async def add_ads_in_queue(self, mediafile, text, user_id, public_time, validity):
         """Метод добавляет объявление в очередь на модерацию"""
         generate_id = ''.join(choices(string.digits + string.ascii_letters, k=8))
         file_id_list = mediafile if len(mediafile) > 0 else None
