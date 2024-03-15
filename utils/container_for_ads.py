@@ -1,6 +1,6 @@
 class ContainerForAds:
     """Через данный класс реализуется контейнер для объявлений"""
-    def __init__(self,container_id: str, text: str, user_id: int, public_time: str, validity: int, file_id):
+    def __init__(self, container_id: str, text: str, user_id: int, public_time: str, validity: int, file_id):
         self.container_id = container_id
         self.text = text
         self.file_id = file_id

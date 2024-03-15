@@ -19,6 +19,16 @@ admin_cancel = ReplyKeyboardMarkup(
         resize_keyboard=True,
 )
 
+admin_back = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Назад')]],
+        resize_keyboard=True,
+)
+
+admin_file = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Дальше ▶️')],
+                  [KeyboardButton(text='◀️ Назад')]],
+        resize_keyboard=True)
+
 moderation_keyboard = ReplyKeyboardMarkup(
         keyboard=[
                 [KeyboardButton(text='Отправить на публикацию')],
@@ -26,7 +36,8 @@ moderation_keyboard = ReplyKeyboardMarkup(
                  KeyboardButton(text='Редактировать фото/видео')],
                 [KeyboardButton(text='Редактировать время публикации'),
                  KeyboardButton(text='Редактировать время действия')],
-                [KeyboardButton(text='Удалить объявление')]
+                [KeyboardButton(text='Отказать в публикации')],
+                [KeyboardButton(text='Вернуться в главное меню')]
         ],
         resize_keyboard=True
 )

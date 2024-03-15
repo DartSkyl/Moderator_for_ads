@@ -15,13 +15,25 @@ main_user_keyboard = ReplyKeyboardMarkup(
 
 user_cancel = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text='🚫 Отмена')]],
+        resize_keyboard=True
+)
+
+user_back = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Назад')]],
         resize_keyboard=True,
 )
+
 
 user_file = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text='Дальше ▶️')],
                   [KeyboardButton(text='🚫 Отмена')]],
-        resize_keyboard=True,
+        resize_keyboard=True
+)
+
+user_file_2 = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Дальше ▶️')],
+                  [KeyboardButton(text='◀️ Назад')]],
+        resize_keyboard=True
 )
 
 preview_keyboard = ReplyKeyboardMarkup(

@@ -1,0 +1,175 @@
+from utils import admin_router, queue_for_moderation, queue_for_publication
+from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back
+from states import ModerationAds
+from loader import bot
+
+from aiogram.types import Message, FSInputFile
+from aiogram import F, html
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.utils.media_group import MediaGroupBuilder
+
+
+async def moderation_func(msg: Message, state: FSMContext):
+    ads_items = await state.get_data()
+    ads_count = await queue_for_moderation.get_quantity()
+    await msg.answer(text=f'Объявление для модерации\n(всего объявлений в очереди {ads_count}):',
+                     reply_markup=moderation_keyboard)
+    msg_with_time = (f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
+                     f'Желаемое время действия: <b>{ads_items["validity"]}</b> суток')
+    if ads_items['mediafile']:  # Если данный список пуст, значит объявление без медиафайлов
+        media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
+        for mediafile in ads_items['mediafile']:
+            media_group.add(type=mediafile[1], media=mediafile[0])
+        await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
+
+    else:
+        await msg.answer(text=html.quote(ads_items['text']))
+
+    await msg.answer(text=msg_with_time)
+    await state.set_state(ModerationAds.mod_preview)
+
+
+@admin_router.message(Command('start'))
+async def start_function(msg: Message):
+    """Функция запускается при старте бота и вводе соответствующей команды от имени администратора"""
+    await msg.answer(
+        text=f'Привет, {html.quote(msg.from_user.first_name)}!\nЖду ваших решений😉',
+        reply_markup=main_admin_keyboard
+    )
+
+
+@admin_router.message(F.text == '📋 Очередь объявлений на модерацию')
+async def view_queue_for_moderation(msg: Message, state: FSMContext):
+    """Здесь начинается просмотр очереди на модерацию"""
+    # Данный метод всегда (если только там не пусто) возвращает первое объявление в списке!
+    ads = await queue_for_moderation.get_ads_from_queue()
+    if isinstance(ads, str):
+        await msg.answer(text=ads, reply_markup=main_admin_keyboard)
+        await state.clear()
+    else:
+        await state.set_state(ModerationAds.mod_preview)
+        await state.set_data({
+            'container_id': ads.container_id,
+            'text': ads.text,
+            'user_id': ads.user_id,
+            'mediafile': ads.file_id,
+            'public_time': ads.public_time,
+            'validity': ads.validity
+        })
+        await moderation_func(msg=msg, state=state)
+
+
+@admin_router.message(ModerationAds.mod_preview, F.text == 'Отправить на публикацию')
+async def send_to_publication_queue(msg: Message, state: FSMContext):
+    """Здесь объявление отправляется на публикацию"""
+    ads_items = await state.get_data()
+    await queue_for_publication.add_ads_in_queue(
+        container_id=ads_items['container_id'],
+        text=ads_items['text'],
+        user_id=ads_items['user_id'],
+        mediafile=ads_items['mediafile'],
+        public_time=ads_items['public_time'],
+        validity=ads_items['validity']
+    )
+    await queue_for_moderation.remove_ads_from_queue(container_id=ads_items['container_id'])
+    await msg.answer(text='Объявление отправлено на публикацию')
+    await view_queue_for_moderation(msg, state)
+
+
+@admin_router.message(ModerationAds.mod_preview, F.text != 'Вернуться в главное меню')
+async def moderation_text(msg: Message, state: FSMContext):
+    """Здесь администратор выбирает действие для модерации"""
+    actions = {
+        'Редактировать текст': (ModerationAds.mod_text, 'Введите новый текст:', admin_back),
+        'Редактировать фото/видео': (ModerationAds.mod_mediafile, 'Добавьте фото или видео (до 7 файлов) '
+                                                                  'и/или нажмите кнопку "Дальше ▶️"', admin_file),
+        'Редактировать время публикации': (ModerationAds.mod_time_for_publication, 'Введите время в формате\n'
+                                                                                   '<b>11:00 13.03.2024</b>', admin_back),
+        'Редактировать время действия': (ModerationAds.mod_validity, 'Ведите время действия '
+                                                                     'объявления (от 1 до 30 суток)', admin_back),
+
+    }
+
+    await state.set_state(actions[msg.text][0])
+    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2])
+    if msg.text == 'Редактировать фото/видео':
+        # На случай, если после начала модерации медиафайла, администратор передумает,
+        # то вернем файлы на место из backup
+        backup = (await state.get_data())['mediafile']
+        await state.update_data({'backup': backup})
+        await state.update_data({'mediafile': []})
+
+
+@admin_router.message(F.text.in_(('Назад', '◀️ Назад')))
+async def back_func(msg: Message, state: FSMContext):
+    """Хэндлер возвращает администратора назад в меню модерации"""
+    if msg.text == '◀️ Назад':
+        # Так как данная кнопка используется только при модерирование медиафайлов
+        # и в этот момент они стираются, то в случае отмены модерации вернем их на место из backup
+        backup = (await state.get_data())['backup']
+        await state.update_data({'mediafile': backup})
+    await state.set_state(ModerationAds.mod_preview)
+    await moderation_func(msg, state)
+
+
+@admin_router.message(ModerationAds.mod_text)
+async def edit_text_func(msg: Message, state: FSMContext):
+    """Здесь пользователь корректирует текст объявления"""
+    await state.update_data({'text': msg.text})
+    await msg.answer(text='Текст объявления изменен!')
+    await state.set_state(ModerationAds.mod_preview)
+    await moderation_func(msg, state)
+
+
+@admin_router.message(ModerationAds.mod_mediafile, F.text != 'Дальше ▶️')
+async def edit_mediafile(msg: Message, state: FSMContext):
+    """Здесь пользователь редактирует медиафайлы"""
+    file_id_list = (await state.get_data())['mediafile']
+
+    if msg.photo:
+        file_id_list.append((msg.photo[-1].file_id, 'photo'))
+    elif msg.video:
+        file_id_list.append((msg.video.file_id, 'video'))
+
+    await state.update_data({'mediafile': file_id_list})
+
+
+@admin_router.message(ModerationAds.mod_mediafile, F.text == 'Дальше ▶️')
+async def edit_mediafile2(msg: Message, state: FSMContext):
+    """Здесь медиафайлы перезаписываются"""
+    file_id_list = (await state.get_data())['mediafile']
+    # смотрим, что бы файлов было не больше разрешенного
+    if len(file_id_list) > 7:
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file)
+        await state.update_data({'mediafile': []})
+    else:
+        await msg.answer(text='Фото/Видео изменено!')
+        await state.set_state(ModerationAds.mod_preview)
+        await moderation_func(msg, state)
+
+
+@admin_router.message(ModerationAds.mod_time_for_publication, F.text.regexp(r'\d{1,2}[:]\d{2}\s\d{1,2}.\d{1,2}.\d{4}$'))
+async def edit_time_for_publication(msg: Message, state: FSMContext):
+    """Здесь пользователь редактирует желаемое время публикации"""
+    await state.update_data({'public_time': msg.text})
+    await state.set_state(ModerationAds.mod_preview)
+    await moderation_func(msg, state)
+
+
+@admin_router.message(ModerationAds.mod_validity, F.text.regexp(r'\d{1,2}'))
+async def edit_validity(msg: Message, state: FSMContext):
+    """Здесь пользователь редактирует желаемое время действия объявления"""
+    if 1 <= int(msg.text) <= 30:
+        await state.update_data({'validity': int(msg.text)})
+        await state.set_state(ModerationAds.mod_preview)
+        await moderation_func(msg, state)
+    else:
+        await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
+
+
+@admin_router.message(F.text == 'Вернуться в главное меню')
+async def return_to_the_main_menu(msg: Message, state: FSMContext):
+    """Хэндлер возвращает администратора в главное меню"""
+    await msg.answer(text='Возврат в главное меню', reply_markup=main_admin_keyboard)
+    await state.clear()

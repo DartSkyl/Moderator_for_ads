@@ -1,6 +1,6 @@
 import asyncio
 from utils import users_router, queue_for_moderation
-from keyboards import main_user_keyboard, user_cancel, preview_keyboard, user_file
+from keyboards import main_user_keyboard, user_cancel, preview_keyboard, user_file, user_file_2, user_back
 from states import CreatingAds
 from loader import bot
 
@@ -17,14 +17,14 @@ async def preview_func(msg: Message, state: FSMContext):
     await msg.answer(text='Предпросмотр:', reply_markup=preview_keyboard)
     msg_with_time = (f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
                      f'Желаемое время действия: <b>{ads_items["validity"]}</b> суток')
-    if len(ads_items['mediafile']) > 0:
-        media_group = MediaGroupBuilder(caption=ads_items['text'])
+    if len(ads_items['mediafile']) > 0:  # Если данный список пуст, значит объявление без медиафайлов
+        media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
         for mediafile in ads_items['mediafile']:
             media_group.add(type=mediafile[1], media=mediafile[0])
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=ads_items['text'])
+        await msg.answer(text=html.quote(ads_items['text']))
 
     await msg.answer(text=msg_with_time)
     await state.set_state(CreatingAds.preview)
@@ -154,19 +154,35 @@ async def delete_created_ads(msg: Message, state: FSMContext):
 async def action_after_preview(msg: Message, state: FSMContext):
     """Здесь пользователь выбирает действие для редактирования"""
     actions = {
-        'Редактировать текст': (CreatingAds.edit_text, 'Введите новый текст:', None),
+        'Редактировать текст': (CreatingAds.edit_text, 'Введите новый текст:', user_back),
         'Редактировать фото/видео': (CreatingAds.edit_mediafile, 'Добавьте фото или видео (до 7 файлов) '
-                                                                 'и/или нажмите кнопку "Дальше ▶️"', user_file),
+                                                                 'и/или нажмите кнопку "Дальше ▶️"', user_file_2),
         'Редактировать время публикации': (CreatingAds.edit_time_for_publication, 'Введите желаемое время в формате\n'
-                                                                                  '<b>11:00 13.03.2024</b>', None),
+                                                                                  '<b>11:00 13.03.2024</b>', user_back),
         'Редактировать время действия': (CreatingAds.edit_validity, 'Ведите желаемое время действия '
-                                                                    'объявления (от 1 до 30 суток)', None),
+                                                                    'объявления (от 1 до 30 суток)', user_back),
     }
 
     await state.set_state(actions[msg.text][0])
     await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2])
     if msg.text == 'Редактировать фото/видео':
+        # На случай, если после начала модерации медиафайла, пользователь передумает,
+        # то вернем файлы на место из backup
+        backup = (await state.get_data())['mediafile']
+        await state.update_data({'backup': backup})
         await state.update_data({'mediafile': []})
+
+
+@users_router.message(F.text.in_(('Назад', '◀️ Назад')))
+async def back_func(msg: Message, state: FSMContext):
+    """Хэндлер возвращает администратора назад в меню модерации"""
+    if msg.text == '◀️ Назад':
+        # Так как данная кнопка используется только при редактировании медиафайлов
+        # и в этот момент они стираются, то в случае отмены редактирования вернем их на место из backup
+        backup = (await state.get_data())['backup']
+        await state.update_data({'mediafile': backup})
+    await state.set_state(CreatingAds.preview)
+    await preview_func(msg, state)
 
 
 @users_router.message(CreatingAds.edit_text)
@@ -197,11 +213,10 @@ async def edit_mediafile2(msg: Message, state: FSMContext):
     file_id_list = (await state.get_data())['mediafile']
     # смотрим, что бы файлов было не больше разрешенного
     if len(file_id_list) > 7:
-        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file)
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file_2)
         await state.update_data({'mediafile': []})
     else:
-        await msg.answer(text='Фото/Видео изменено!',
-                         reply_markup=user_cancel)
+        await msg.answer(text='Фото/Видео изменено!')
         await state.set_state(CreatingAds.preview)
         await preview_func(msg, state)
 

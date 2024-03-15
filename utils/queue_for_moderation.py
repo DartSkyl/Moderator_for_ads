@@ -23,13 +23,21 @@ class QueueForModeration:
         )
         self.ads_list.append(container)
 
-    async def remove_ads_from_queue(self):
-        """Метод удаляет объявление из очереди на модерацию"""
-        pass
+    async def remove_ads_from_queue(self, container_id):
+        """Метод удаляет объявление из очереди на модерацию.
+        Не важно, отправляется оно в очередь на публикацию или не прошло модерацию
+        удаляется всегда первое объявление из списка"""
+        # На всякий случай проверим, что бы их ID совпадали
+        if self.ads_list[0].container_id == container_id:
+            self.ads_list.pop(0)
 
     async def get_ads_from_queue(self):
-        """Метод получения объявления из очереди на модерацию"""
+        """Метод получения объявления из очереди на модерацию. Всегда выдается первое в списке!"""
         return self.ads_list[0] if len(self.ads_list) > 0 else 'Очередь объявлений на модерацию пуста!'
+
+    async def get_quantity(self):
+        """Возвращает строку с кол-вом объявлений ожидающих модерации"""
+        return str(len(self.ads_list))
 
 
 queue_for_moderation = QueueForModeration()
