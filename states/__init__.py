@@ -1,7 +1,8 @@
 from .user_states import CreatingAds
+from .admin_states import ModerationAds
 
 
 __all__ = (
-    # Стэйты пользователей
-    "CreatingAds"
+    "CreatingAds",
+    "ModerationAds"
 )

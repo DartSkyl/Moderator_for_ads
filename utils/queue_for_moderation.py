@@ -29,8 +29,7 @@ class QueueForModeration:
 
     async def get_ads_from_queue(self):
         """Метод получения объявления из очереди на модерацию"""
-        for elem in self.ads_list:
-            print(elem)
+        return self.ads_list[0] if len(self.ads_list) > 0 else 'Очередь объявлений на модерацию пуста!'
 
 
 queue_for_moderation = QueueForModeration()

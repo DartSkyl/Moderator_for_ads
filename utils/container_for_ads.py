@@ -1,7 +1,3 @@
-from random import choices
-import string
-
-
 class ContainerForAds:
     """Через данный класс реализуется контейнер для объявлений"""
     def __init__(self,container_id: str, text: str, user_id: int, public_time: str, validity: int, file_id):
@@ -20,12 +16,3 @@ class ContainerForAds:
                       f'Public time: {self.public_time}\n'
                       f'Validity: {self.validity}\n')
         return itself_str
-
-    def get_id(self):
-        return self.container_id
-
-    def get_file_id(self):
-        return self.file_id
-
-    def get_text(self):
-        return self.text
