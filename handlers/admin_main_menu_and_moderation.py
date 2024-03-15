@@ -77,6 +77,25 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
     await view_queue_for_moderation(msg, state)
 
 
+@admin_router.message(ModerationAds.mod_preview, F.text == 'Отказать в публикации')
+async def refuse_publication(msg: Message, state: FSMContext):
+    """Здесь администратор отказывает в публикации"""
+    await msg.answer(text='Введите комментарий к отказу:', reply_markup=admin_back)
+    await state.set_state(ModerationAds.mod_refuse)
+
+
+@admin_router.message(ModerationAds.mod_refuse, F.text != 'Назад')
+async def send_comment(msg: Message, state: FSMContext):
+    """Здесь мы отправляем владельцу объявления сообщение об отказе и комментарий"""
+    user_id = (await state.get_data())['user_id']
+    ads_id = (await state.get_data())['container_id']
+    await queue_for_moderation.remove_ads_from_queue(container_id=ads_id)
+    standard_text = 'Вым было отказано в публикации объявления по причине:\n'
+    await bot.send_message(chat_id=user_id, text=(standard_text + msg.text))
+    await msg.answer(text='Сообщение отправлено')
+    await view_queue_for_moderation(msg, state)
+
+
 @admin_router.message(ModerationAds.mod_preview, F.text != 'Вернуться в главное меню')
 async def moderation_text(msg: Message, state: FSMContext):
     """Здесь администратор выбирает действие для модерации"""

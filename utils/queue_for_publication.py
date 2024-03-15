@@ -8,7 +8,6 @@ class QueueForPublication:
 
     async def add_ads_in_queue(self, container_id, text, user_id, mediafile, public_time, validity):
         """Здесь происходит добавление объявления в очередь на публикацию"""
-        # file_id_list = mediafile if len(mediafile) > 0 else None
         container = ContainerForAds(
             container_id=container_id,
             text=text,
@@ -18,6 +17,10 @@ class QueueForPublication:
             validity=validity
         )
         self.ads_list.append(container)
+
+    async def get_ads_list(self):
+        """Метод выдает всю очередь для просмотра если она не пуста"""
+        return self.ads_list if len(self.ads_list) > 0 else 'Очередь на публикацию пуста!'
 
 
 queue_for_publication = QueueForPublication()
