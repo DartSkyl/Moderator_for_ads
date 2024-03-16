@@ -24,4 +24,4 @@ MAIN_GROUP_ID = int(os.getenv("main_group_id"))
 #     filemode='a',
 #     format="%(asctime)s %(levelname)s %(message)s"
 # )
-# logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger().setLevel(logging.DEBUG)

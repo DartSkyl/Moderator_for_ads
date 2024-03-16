@@ -1,4 +1,9 @@
+import time
+from config_data.config import PG_URI, MAIN_GROUP_ID
+from loader import db, bot, admins_id
 from .container_for_ads import ContainerForAds
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 class QueueForPublication:
@@ -24,3 +29,15 @@ class QueueForPublication:
 
 
 queue_for_publication = QueueForPublication()
+
+
+class Publisher:
+    """Данный класс реализует публикатора объявлений в канал"""
+
+    def __init__(self):
+        self._scheduler = AsyncIOScheduler(gconfig={'apscheduler.timezone': 'Europe/Moscow'})
+        self._scheduler.add_jobstore(jobstore='sqlalchemy', alias='publisher', url=PG_URI, tablename='aps_publisher')
+        self._scheduler.start()
+
+
+
