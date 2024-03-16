@@ -40,4 +40,3 @@ class Publisher:
         self._scheduler.start()
 
 
-
