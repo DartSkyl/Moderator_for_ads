@@ -1,6 +1,10 @@
-from .reply.user_keyboard import main_user_keyboard, user_cancel, user_file, user_file_2, preview_keyboard, user_back
+from .reply.user_keyboard import (main_user_keyboard, user_cancel, user_file,
+                                  user_file_2, preview_keyboard, user_back)
 from .inline.user_keyboard import content_selection
-from .reply.admin_keyboard import main_admin_keyboard, admin_cancel, moderation_keyboard, admin_file, admin_back
+from .reply.admin_keyboard import (main_admin_keyboard, admin_cancel,
+                                   moderation_keyboard, admin_file, admin_back,
+                                   view_queue, edit_public_keyboard, admin_back_2, admin_file_2,
+                                   admin_preview_keyboard)
 
 __all__ = (
 
@@ -18,5 +22,10 @@ __all__ = (
     "admin_cancel",
     "moderation_keyboard",
     "admin_file",
-    "admin_back"
+    "admin_back",
+    "view_queue",
+    "edit_public_keyboard",
+    "admin_back_2",
+    "admin_file_2",
+    "admin_preview_keyboard"
 )

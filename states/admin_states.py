@@ -18,3 +18,20 @@ class ModerationAds(StatesGroup):
     pub_mediafile = State()
     pub_time_for_publication = State()
     pub_validity = State()
+
+
+class AdminCreated(StatesGroup):
+    # Стэйты для создания объявления
+    start_creating = State()
+    adding_text = State()
+    false_state = State()
+    adding_mediafile = State()
+    time_for_publication = State()
+    validity = State()
+    preview = State()
+
+    # Стэйты для редактирования
+    edit_text = State()
+    edit_mediafile = State()
+    edit_time_for_publication = State()
+    edit_validity = State()

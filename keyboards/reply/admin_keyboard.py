@@ -29,6 +29,16 @@ admin_file = ReplyKeyboardMarkup(
                   [KeyboardButton(text='◀️ Назад')]],
         resize_keyboard=True)
 
+admin_back_2 = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Вернуться')]],
+        resize_keyboard=True,
+)
+
+admin_file_2 = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Дальше ▶️')],
+                  [KeyboardButton(text='◀️ Вернуться')]],
+        resize_keyboard=True)
+
 moderation_keyboard = ReplyKeyboardMarkup(
         keyboard=[
                 [KeyboardButton(text='Отправить на публикацию')],
@@ -42,3 +52,36 @@ moderation_keyboard = ReplyKeyboardMarkup(
         resize_keyboard=True
 )
 
+admin_preview_keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+                [KeyboardButton(text='Отправить на публикацию')],
+                [KeyboardButton(text='Редактировать текст'),
+                 KeyboardButton(text='Редактировать фото/видео')],
+                [KeyboardButton(text='Редактировать время публикации'),
+                 KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Удалить объявление')]
+        ],
+        resize_keyboard=True
+)
+
+view_queue = ReplyKeyboardMarkup(
+        keyboard=[
+                [KeyboardButton(text='◀️ Предыдущее объявление'),
+                 KeyboardButton(text='Следующее объявление ▶️')],
+                [KeyboardButton(text='Редактировать объявление')],
+                [KeyboardButton(text='Вернуться в главное меню')]
+        ],
+        resize_keyboard=True
+)
+
+edit_public_keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+                # [KeyboardButton(text='Сохранить изменения')],
+                [KeyboardButton(text='Редактировать текст'),
+                 KeyboardButton(text='Редактировать фото/видео')],
+                [KeyboardButton(text='Редактировать время публикации'),
+                 KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Вернуться в очередь на публикацию')]
+        ],
+        resize_keyboard=True
+)

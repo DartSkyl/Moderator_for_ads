@@ -19,5 +19,4 @@ class IsAdminFilter(BaseFilter):
 
 admin_router = Router()
 
-# Выше описанный фильтр добавляем прямо в роутер
 admin_router.message.filter(IsAdminFilter(admins_list=admins_id))
