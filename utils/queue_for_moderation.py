@@ -1,5 +1,6 @@
 from random import choices
 import string
+from loader import db
 from .container_for_ads import ContainerForAds
 
 
@@ -21,7 +22,46 @@ class QueueForModeration:
             public_time=public_time,
             validity=validity
         )
+        file_id_from_for_db = ''
+        if file_id_list:
+            for elem in file_id_list:
+                file_id_from_for_db += '!$!$'.join(elem)
+                file_id_from_for_db += '$!$!'  # разделитель между записями
+        else:
+            file_id_from_for_db = 'None'
+
+        await db.input_ads_mod(
+            container_id=generate_id,
+            text=text,
+            user_id=user_id,
+            file_id=file_id_from_for_db,
+            public_time=public_time,
+            validity=validity
+        )
+
         self.ads_list.append(container)
+
+    async def load_queue_from_base(self):
+        """Выгружаем очередь из базы"""
+
+        mod_queue = await db.output_queue_mod()
+        for ads in mod_queue:
+            if ads['file_id'] != 'None':
+                file_id_list = ads['file_id'].split('$!$!')
+                file_id_list = [elem.split('!$!$') for elem in file_id_list]
+                file_id_list.pop()  # В конце образуется пустой элемент
+
+            else:
+                file_id_list = None
+            container = ContainerForAds(
+                container_id=ads['container_id'],
+                text=ads['text'],
+                user_id=ads['user_id'],
+                file_id=file_id_list,
+                public_time=ads['public_time'],
+                validity=ads['validity']
+            )
+            self.ads_list.append(container)
 
     async def remove_ads_from_queue(self, container_id):
         """Метод удаляет объявление из очереди на модерацию.

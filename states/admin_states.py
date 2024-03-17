@@ -18,6 +18,7 @@ class ModerationAds(StatesGroup):
     pub_mediafile = State()
     pub_time_for_publication = State()
     pub_validity = State()
+    pub_delete = State()
 
 
 class AdminCreated(StatesGroup):

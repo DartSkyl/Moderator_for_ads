@@ -1,7 +1,7 @@
 from utils import admin_router, queue_for_moderation, queue_for_publication
 from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back
 from states import ModerationAds
-from loader import bot
+from loader import bot, db
 
 from aiogram.types import Message, FSInputFile
 from aiogram import F, html
@@ -73,6 +73,7 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         validity=ads_items['validity']
     )
     await queue_for_moderation.remove_ads_from_queue(container_id=ads_items['container_id'])
+    await db.remove_ads_mod(container_id=ads_items['container_id'])
     await msg.answer(text='Объявление отправлено на публикацию')
     await view_queue_for_moderation(msg, state)
 
@@ -135,10 +136,14 @@ async def back_func(msg: Message, state: FSMContext):
 @admin_router.message(ModerationAds.mod_text)
 async def edit_text_func(msg: Message, state: FSMContext):
     """Здесь пользователь корректирует текст объявления"""
-    await state.update_data({'text': msg.text})
-    await msg.answer(text='Текст объявления изменен!')
-    await state.set_state(ModerationAds.mod_preview)
-    await moderation_func(msg, state)
+    if len(msg.text) > 1000:
+        await msg.answer(f'Ограничение для объявления 1000 символов '
+                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз')
+    else:
+        await state.update_data({'text': msg.text})
+        await msg.answer(text='Текст объявления изменен!')
+        await state.set_state(ModerationAds.mod_preview)
+        await moderation_func(msg, state)
 
 
 @admin_router.message(ModerationAds.mod_mediafile, F.text != 'Дальше ▶️')

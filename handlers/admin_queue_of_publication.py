@@ -1,12 +1,11 @@
 from utils import admin_router, queue_for_publication
 from keyboards import (main_admin_keyboard, moderation_keyboard,
-                       admin_file_2, admin_back_2, view_queue, edit_public_keyboard)
+                       admin_file_2, admin_back_2, view_queue, edit_public_keyboard, confirm)
 from states import ModerationAds
 from loader import bot
 
 from aiogram.types import Message, FSInputFile
 from aiogram import F, html
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
 
@@ -97,7 +96,8 @@ async def moderation_text(msg: Message, state: FSMContext):
         'Редактировать время публикации': (ModerationAds.pub_time_for_publication, 'Введите время в формате\n'
                                                                                    '<b>11:00 13.03.2024</b>', admin_back_2),
         'Редактировать время действия': (ModerationAds.pub_validity, 'Ведите время действия '
-                                                                     'объявления (от 1 до 30 суток)', admin_back_2)
+                                                                     'объявления (от 1 до 30 суток)', admin_back_2),
+        'Удалить объявление': (ModerationAds.pub_delete, 'Вы уверены❓', confirm)
     }
 
     await state.set_state(actions[msg.text][0])
@@ -111,7 +111,7 @@ async def moderation_text(msg: Message, state: FSMContext):
         await state.update_data({'mediafile': []})
 
 
-@admin_router.message(F.text.in_(('Вернуться', '◀️ Вернуться')))
+@admin_router.message(F.text.in_(('Вернуться', '◀️ Вернуться', 'Нет ❌')))
 async def back_func(msg: Message, state: FSMContext):
     """Хэндлер возвращает администратора назад в меню модерации"""
     edit_ads = (await state.get_data())['edit_ads']
@@ -165,16 +165,17 @@ async def edit_mediafile2(msg: Message, state: FSMContext):
 
 @admin_router.message(ModerationAds.pub_time_for_publication, F.text.regexp(r'\d{1,2}[:]\d{2}\s\d{1,2}.\d{1,2}.\d{4}$'))
 async def edit_time_for_publication(msg: Message, state: FSMContext):
-    """Здесь пользователь редактирует желаемое время публикации"""
+    """Здесь администратор редактирует время публикации"""
     edit_ads = (await state.get_data())['edit_ads']
     edit_ads.public_time = msg.text
+    await queue_for_publication.edit_time_for_publication(edit_ads)
     await state.set_state(ModerationAds.pub_preview)
     await demonstrate_func(msg, state, edit_ads)
 
 
 @admin_router.message(ModerationAds.pub_validity, F.text.regexp(r'\d{1,2}'))
 async def edit_validity(msg: Message, state: FSMContext):
-    """Здесь пользователь редактирует желаемое время действия объявления"""
+    """Здесь пользователь редактирует время действия объявления"""
     if 1 <= int(msg.text) <= 30:
         edit_ads = (await state.get_data())['edit_ads']
         edit_ads.public_time = int(msg.text)
@@ -182,3 +183,12 @@ async def edit_validity(msg: Message, state: FSMContext):
         await demonstrate_func(msg, state, edit_ads)
     else:
         await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
+
+
+@admin_router.message(ModerationAds.pub_delete, F.text == '✅ Да')
+async def delete_ads(msg: Message, state: FSMContext):
+    """Удаляем выбранное объявление"""
+    ads = (await state.get_data())['edit_ads']
+    await queue_for_publication.remove_ads_container(ads)
+    await msg.answer(text='Объявление удалено')
+    await view_queue_for_publication(msg, state)

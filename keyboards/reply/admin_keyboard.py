@@ -29,6 +29,12 @@ admin_file = ReplyKeyboardMarkup(
                   [KeyboardButton(text='◀️ Назад')]],
         resize_keyboard=True)
 
+admin_create_file = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='Дальше ▶️')],
+                  [KeyboardButton(text='🚫 Отмена')]],
+        resize_keyboard=True
+)
+
 admin_back_2 = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text='Вернуться')]],
         resize_keyboard=True,
@@ -57,8 +63,8 @@ admin_preview_keyboard = ReplyKeyboardMarkup(
                 [KeyboardButton(text='Отправить на публикацию')],
                 [KeyboardButton(text='Редактировать текст'),
                  KeyboardButton(text='Редактировать фото/видео')],
-                [KeyboardButton(text='Редактировать время публикации'),
-                 KeyboardButton(text='Редактировать время действия')],
+                # [KeyboardButton(text='Редактировать время публикации'),
+                #  KeyboardButton(text='Редактировать время действия')],
                 [KeyboardButton(text='Удалить объявление')]
         ],
         resize_keyboard=True
@@ -74,6 +80,13 @@ view_queue = ReplyKeyboardMarkup(
         resize_keyboard=True
 )
 
+confirm = ReplyKeyboardMarkup(
+        keyboard=[
+                [KeyboardButton(text='✅ Да'), KeyboardButton(text='Нет ❌')]
+        ],
+        resize_keyboard=True
+)
+
 edit_public_keyboard = ReplyKeyboardMarkup(
         keyboard=[
                 # [KeyboardButton(text='Сохранить изменения')],
@@ -81,6 +94,7 @@ edit_public_keyboard = ReplyKeyboardMarkup(
                  KeyboardButton(text='Редактировать фото/видео')],
                 [KeyboardButton(text='Редактировать время публикации'),
                  KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Удалить объявление')],
                 [KeyboardButton(text='Вернуться в очередь на публикацию')]
         ],
         resize_keyboard=True
