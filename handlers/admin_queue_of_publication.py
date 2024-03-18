@@ -2,7 +2,7 @@ from utils import admin_router, queue_for_publication
 from keyboards import (main_admin_keyboard, moderation_keyboard,
                        admin_file_2, admin_back_2, view_queue, edit_public_keyboard, confirm)
 from states import ModerationAds
-from loader import bot
+from loader import bot, db
 
 from aiogram.types import Message, FSInputFile
 from aiogram import F, html
@@ -52,14 +52,17 @@ async def view_queue_for_publication(msg: Message, state: FSMContext):
 async def next_ads(msg: Message, state: FSMContext):
     """Здесь мы перелистываем на следующее объявление"""
     queue_info = await state.get_data()
-    if queue_info['count'] > queue_info['page']:
-        await state.update_data({'page': queue_info['page'] + 1})
+    try:
+        if queue_info['count'] > queue_info['page']:
+            await state.update_data({'page': queue_info['page'] + 1})
 
-        # Номер индекса демонстрируемого объявления равен номеру предыдущей страницы. Так, на всякий случай
-        await demonstrate_func(msg=msg, state=state, ads=queue_info['queue'][queue_info['page']])
+            # Номер индекса демонстрируемого объявления равен номеру предыдущей страницы. Так, на всякий случай
+            await demonstrate_func(msg=msg, state=state, ads=queue_info['queue'][queue_info['page']])
 
-    else:
-        await msg.answer(text='Это конец очереди!')
+        else:
+            await msg.answer(text='Это конец очереди!')
+    except IndexError:
+        await view_queue_for_publication(msg, state)
 
 
 @admin_router.message(ModerationAds.pub_preview, F.text == '◀️ Предыдущее объявление')
@@ -109,6 +112,11 @@ async def moderation_text(msg: Message, state: FSMContext):
         await state.update_data({'backup': backup})
         (await state.get_data())['edit_ads'].file_id = []
         await state.update_data({'mediafile': []})
+
+
+@admin_router.message(ModerationAds.pub_preview, F.text == 'Вернуться в очередь на публикацию')
+async def return_to_pub_queue(msg: Message, state: FSMContext):
+    await view_queue_for_publication(msg, state)
 
 
 @admin_router.message(F.text.in_(('Вернуться', '◀️ Вернуться', 'Нет ❌')))
@@ -190,5 +198,6 @@ async def delete_ads(msg: Message, state: FSMContext):
     """Удаляем выбранное объявление"""
     ads = (await state.get_data())['edit_ads']
     await queue_for_publication.remove_ads_container(ads)
+    await db.remove_ads_pub(ads.container_id)
     await msg.answer(text='Объявление удалено')
     await view_queue_for_publication(msg, state)

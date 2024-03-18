@@ -148,6 +148,7 @@ async def send_ads_for_moderation(msg: Message, state: FSMContext):
         validity=ads_items['validity']
     )
     await msg.answer(text='Объявление отправлено на модерацию!', reply_markup=main_user_keyboard)
+    await state.clear()
 
 
 @users_router.message(F.text == 'Удалить объявление')

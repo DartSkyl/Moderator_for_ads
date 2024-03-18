@@ -19,8 +19,8 @@ async def preview_func(msg: Message, state: FSMContext):
     ads_items = await state.get_data()
 
     await msg.answer(text='Предпросмотр:', reply_markup=admin_preview_keyboard)
-    # msg_with_time = (f'Время публикации: <b>{ads_items["public_time"]}</b>\n'
-    #                  f'Время действия: <b>{ads_items["validity"]}</b> суток')
+    msg_with_time = (f'Время публикации: <b>{ads_items["public_time"]}</b>\n'
+                     f'Время действия: <b>{ads_items["validity"]}</b> суток')
     if len(ads_items['mediafile']) > 0:  # Если данный список пуст, значит объявление без медиафайлов
         media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
         for mediafile in ads_items['mediafile']:
@@ -30,7 +30,7 @@ async def preview_func(msg: Message, state: FSMContext):
     else:
         await msg.answer(text=html.quote(ads_items['text']))
 
-    # await msg.answer(text=msg_with_time)
+    await msg.answer(text=msg_with_time)
     await state.set_state(AdminCreated.preview)
 
 
@@ -99,38 +99,38 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
         await state.update_data({'mediafile': []})
     else:
         await state.set_state(AdminCreated.preview)
+        # await preview_func(msg, state)
+        await msg.answer(text="Теперь введите время и дату для публикации в следующем формате:\n"
+                              "<b>11:00 13.03.2024</b>\n\n",
+                         reply_markup=admin_cancel)
+        await state.set_state(AdminCreated.time_for_publication)
+
+
+@admin_router.message(AdminCreated.time_for_publication,
+                      F.text.regexp(r'\d{1,2}[:]\d{2}\s\d{1,2}.\d{1,2}.\d{4}$'))
+async def setting_the_desired_time(msg: Message, state: FSMContext):
+    """Здесь происходит установка желаемого времени и даты публикации"""
+    await state.update_data({'public_time': msg.text})
+    await msg.answer(text='Теперь введите срок действия объявления (от 1 до 30 суток)', reply_markup=admin_cancel)
+    await state.set_state(AdminCreated.validity)
+
+
+@admin_router.message(AdminCreated.time_for_publication, F.text != '🚫 Отмена')
+async def time_error_input(msg: Message):
+    """Хэндлер неверного ввода времени публикации"""
+    await msg.answer(text='Неверный формат времени или даты!\nПовторите попытку\n'
+                          'Необходимый формат <b>11:00 13.03.2024</b>')
+
+
+@admin_router.message(AdminCreated.validity, F.text.regexp(r'\d{1,2}'))
+async def validity_input(msg: Message, state: FSMContext):
+    """Здесь пользователь вводит желаемый срок действия объявления"""
+    if 1 <= int(msg.text) <= 30:
+        await state.update_data({'validity': int(msg.text)})
+        await state.set_state(AdminCreated.preview)
         await preview_func(msg, state)
-        # await msg.answer(text="Теперь введите время и дату для публикации в следующем формате:\n"
-        #                       "<b>11:00 13.03.2024</b>\n\n",
-        #                  reply_markup=admin_cancel)
-        # await state.set_state(AdminCreated.time_for_publication)
-
-
-# @admin_router.message(AdminCreated.time_for_publication,
-#                       F.text.regexp(r'\d{1,2}[:]\d{2}\s\d{1,2}.\d{1,2}.\d{4}$'))
-# async def setting_the_desired_time(msg: Message, state: FSMContext):
-#     """Здесь происходит установка желаемого времени и даты публикации"""
-#     await state.update_data({'public_time': msg.text})
-#     await msg.answer(text='Теперь введите срок действия объявления (от 1 до 30 суток)', reply_markup=admin_cancel)
-#     await state.set_state(AdminCreated.validity)
-
-
-# @admin_router.message(AdminCreated.time_for_publication, F.text != '🚫 Отмена')
-# async def time_error_input(msg: Message):
-#     """Хэндлер неверного ввода времени публикации"""
-#     await msg.answer(text='Неверный формат времени или даты!\nПовторите попытку\n'
-#                           'Необходимый формат <b>11:00 13.03.2024</b>')
-
-
-# @admin_router.message(AdminCreated.validity, F.text.regexp(r'\d{1,2}'))
-# async def validity_input(msg: Message, state: FSMContext):
-#     """Здесь пользователь вводит желаемый срок действия объявления"""
-#     if 1 <= int(msg.text) <= 30:
-#         await state.update_data({'validity': int(msg.text)})
-#         await state.set_state(AdminCreated.preview)
-#         await preview_func(msg, state)
-#     else:
-#         await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
+    else:
+        await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
 
 
 @admin_router.message(AdminCreated.preview, F.text == 'Отправить на публикацию')
@@ -143,8 +143,8 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         text=ads_items['text'],
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
-        public_time='11:00 13.03.2024',
-        validity=1000
+        public_time=ads_items['public_time'],
+        validity=ads_items['validity']
     )
     await msg.answer(text='Объявление отправлено на публикацию', reply_markup=main_admin_keyboard)
     await state.clear()

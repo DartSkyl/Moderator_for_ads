@@ -197,3 +197,15 @@ async def return_to_the_main_menu(msg: Message, state: FSMContext):
     """Хэндлер возвращает администратора в главное меню"""
     await msg.answer(text='Возврат в главное меню', reply_markup=main_admin_keyboard)
     await state.clear()
+
+
+@admin_router.message(F.text == '📨 Связь с администрацией')
+async def admin_list(msg: Message):
+    await msg.answer(text='Контакт для связи :\n@Mikhail_PPro')
+
+
+@admin_router.message(Command('get_log'))
+async def get_bot_log(msg: Message):
+    """Команда выгружает в чат файл с логом бота"""
+    log_file = FSInputFile('bot.log')
+    await msg.answer_document(document=log_file)

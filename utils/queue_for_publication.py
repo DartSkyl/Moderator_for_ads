@@ -37,9 +37,6 @@ class QueueForPublication:
 
         await publisher.add_ads_in_publisher(container)  # noqa
 
-        # if datetime.datetime.now() > publication_time:
-        #
-
     async def add_container_in_db(self, container: ContainerForAds):
         file_id_from_for_db = ''
         if container.file_id:
@@ -97,7 +94,7 @@ class QueueForPublication:
 queue_for_publication = QueueForPublication()
 
 
-async def publisher_function(ads: ContainerForAds):
+async def publisher_function(ads: ContainerForAds, shed=False):
     """Данная функция публикует объявление в канал"""
     validity_str = (datetime.datetime.now() + datetime.timedelta(days=ads.validity)).strftime('%H:%M %Y.%m.%d')
     msg_with_validity = f'\n\n<b>Опубликовано до: {validity_str}</b>\n'
@@ -111,9 +108,15 @@ async def publisher_function(ads: ContainerForAds):
     else:
         message = await bot.send_message(chat_id=MAIN_GROUP_ID, text=(html.quote(ads.text) + msg_with_validity))
         message_id = message.message_id
-
-    await queue_for_publication.remove_ads_container(ads)
+    print(ads)
+    # await queue_for_publication.remove_ads_container(ads)
     await db.remove_ads_pub(ads.container_id)
+    if not shed:
+        await queue_for_publication.remove_ads_container(ads)
+    else:
+        for elem in queue_for_publication.ads_list:
+            if elem.container_id == ads.container_id:
+                await queue_for_publication.remove_ads_container(elem)
 
     if ads.validity <= 2:
         await publisher.auto_remove_ads(message_id=message_id, validity=ads.validity) # noqa
@@ -149,7 +152,7 @@ class Publisher:
         if datetime.datetime.now() > publication_time:
             await publisher_function(ads=ads)
         else:
-            self._scheduler.add_job(func=publisher_function, kwargs={'ads': ads}, id=ads.container_id,
+            self._scheduler.add_job(func=publisher_function, kwargs={'ads': ads, 'shed': True}, id=ads.container_id,
                                     trigger='date', run_date=publication_time, jobstore='publisher', max_instances=1,
                                     replace_existing=True)
             await queue_for_publication.add_container_in_db(container=ads)
@@ -161,6 +164,3 @@ class Publisher:
         self._scheduler.add_job(func=auto_remove, kwargs={'message_id': message_id},
                                 trigger='interval', minutes=validity, jobstore='publisher',
                                 max_instances=1, replace_existing=True)
-
-
-

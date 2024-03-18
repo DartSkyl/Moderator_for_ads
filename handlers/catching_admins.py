@@ -12,3 +12,12 @@ from aiogram.filters import ChatMemberUpdatedFilter, IS_NOT_MEMBER, ADMINISTRATO
 async def new_administrator(chat_member: ChatMember):
     """Ловим новых администраторов бота только из основной группы"""
     admins_id.append(chat_member.new_chat_member.user.id)
+
+
+@dp.chat_member(F.chat.id == MAIN_GROUP_ID,
+                ChatMemberUpdatedFilter(
+                    member_status_changed=(MEMBER | IS_NOT_MEMBER) << ADMINISTRATOR)
+                )
+async def remove_administrator(chat_member: ChatMember):
+    """Удаляем администратора из списка с ID администраторов"""
+    admins_id.remove(chat_member.new_chat_member.user.id)
