@@ -20,7 +20,12 @@ user_cancel = ReplyKeyboardMarkup(
 
 user_back = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text='Назад')]],
-        resize_keyboard=True,
+        resize_keyboard=True
+)
+
+user_no_time = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text='Опубликовать сразу')]],
+    resize_keyboard=True
 )
 
 
@@ -41,8 +46,7 @@ preview_keyboard = ReplyKeyboardMarkup(
                 [KeyboardButton(text='Отправить на модерацию')],
                 [KeyboardButton(text='Редактировать текст'),
                  KeyboardButton(text='Редактировать фото/видео')],
-                [KeyboardButton(text='Редактировать время публикации'),
-                 KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Редактировать время публикации')],
                 [KeyboardButton(text='Удалить объявление')]
         ],
         resize_keyboard=True

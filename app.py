@@ -1,8 +1,9 @@
 import asyncio
 import datetime
 import handlers  # noqa
-from loader import dp, db_connect, bot, admin_list_load
+from loader import dp, db_connect, bot, admin_list_load, bot
 from utils import (admin_router, users_router, create_publisher, queue_for_moderation, queue_for_publication)
+from aiogram.types.bot_command import BotCommand
 
 
 async def start_up():
@@ -17,18 +18,12 @@ async def start_up():
     # Запускаем очередь на модерацию
     await queue_for_moderation.load_queue_from_base()
     await queue_for_publication.load_queue_from_base()
+    await bot.set_my_commands(commands=[BotCommand(command='start', description='в любой непонятной ситуации')])
     # Стартуем! Я начну стрелять!
     with open('bot.log', 'a') as log_file:
         log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')
     print('Стартуем')
-    await dp.start_polling(bot,
-                           # allowed_updates=[
-                           #     "message",
-                           #     "callback_query",
-                           #     "pre_checkout_query",
-                           #     "chat_member"
-                           # ]
-                           )
+    await dp.start_polling(bot)
 
 
 if __name__ == '__main__':

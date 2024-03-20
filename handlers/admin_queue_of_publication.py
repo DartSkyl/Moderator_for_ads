@@ -16,8 +16,7 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
 
     await msg.answer(text=f'Объявление {queue_info["page"]}/{queue_info["count"]}:',
                      reply_markup=view_queue)
-    msg_with_time = (f'Время публикации: <b>{ads.public_time}</b>\n'
-                     f'Время действия: <b>{ads.validity}</b> суток')
+    msg_with_time = f'Время публикации: <b>{ads.public_time}</b>\n'
     if ads.file_id:  # Если данный список пуст, значит объявление без медиафайлов
         media_group = MediaGroupBuilder(caption=html.quote(ads.text))
         for mediafile in ads.file_id:
@@ -26,8 +25,8 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
 
     else:
         await msg.answer(text=html.quote(ads.text))
-
-    await msg.answer(text=msg_with_time)
+    if ads.public_time != 'None':
+        await msg.answer(text=msg_with_time)
     await state.set_state(ModerationAds.pub_preview)
 
 
@@ -98,8 +97,6 @@ async def moderation_text(msg: Message, state: FSMContext):
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file_2),
         'Редактировать время публикации': (ModerationAds.pub_time_for_publication, 'Введите время в формате\n'
                                                                                    '<b>11:00 13.03.2024</b>', admin_back_2),
-        'Редактировать время действия': (ModerationAds.pub_validity, 'Ведите время действия '
-                                                                     'объявления (от 1 до 30 суток)', admin_back_2),
         'Удалить объявление': (ModerationAds.pub_delete, 'Вы уверены❓', confirm)
     }
 
@@ -179,18 +176,6 @@ async def edit_time_for_publication(msg: Message, state: FSMContext):
     await queue_for_publication.edit_time_for_publication(edit_ads)
     await state.set_state(ModerationAds.pub_preview)
     await demonstrate_func(msg, state, edit_ads)
-
-
-@admin_router.message(ModerationAds.pub_validity, F.text.regexp(r'\d{1,2}'))
-async def edit_validity(msg: Message, state: FSMContext):
-    """Здесь пользователь редактирует время действия объявления"""
-    if 1 <= int(msg.text) <= 30:
-        edit_ads = (await state.get_data())['edit_ads']
-        edit_ads.public_time = int(msg.text)
-        await state.set_state(ModerationAds.pub_preview)
-        await demonstrate_func(msg, state, edit_ads)
-    else:
-        await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
 
 
 @admin_router.message(ModerationAds.pub_delete, F.text == '✅ Да')

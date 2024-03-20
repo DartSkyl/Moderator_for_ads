@@ -1,5 +1,6 @@
+import datetime
 from utils import admin_router, queue_for_moderation, queue_for_publication
-from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back
+from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back, admin_no_time
 from states import ModerationAds
 from loader import bot, db
 
@@ -15,8 +16,7 @@ async def moderation_func(msg: Message, state: FSMContext):
     ads_count = await queue_for_moderation.get_quantity()
     await msg.answer(text=f'Объявление для модерации\n(всего объявлений в очереди {ads_count}):',
                      reply_markup=moderation_keyboard)
-    msg_with_time = (f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
-                     f'Желаемое время действия: <b>{ads_items["validity"]}</b> суток')
+    msg_with_time = f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
     if ads_items['mediafile']:  # Если данный список пуст, значит объявление без медиафайлов
         media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
         for mediafile in ads_items['mediafile']:
@@ -25,8 +25,8 @@ async def moderation_func(msg: Message, state: FSMContext):
 
     else:
         await msg.answer(text=html.quote(ads_items['text']))
-
-    await msg.answer(text=msg_with_time)
+    if ads_items['public_time'] != 'None':
+        await msg.answer(text=msg_with_time)
     await state.set_state(ModerationAds.mod_preview)
 
 
@@ -55,7 +55,6 @@ async def view_queue_for_moderation(msg: Message, state: FSMContext):
             'user_id': ads.user_id,
             'mediafile': ads.file_id,
             'public_time': ads.public_time,
-            'validity': ads.validity
         })
         await moderation_func(msg=msg, state=state)
 
@@ -70,7 +69,6 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
         public_time=ads_items['public_time'],
-        validity=ads_items['validity']
     )
     await queue_for_moderation.remove_ads_from_queue(container_id=ads_items['container_id'])
     await db.remove_ads_mod(container_id=ads_items['container_id'])
@@ -105,10 +103,7 @@ async def moderation_text(msg: Message, state: FSMContext):
         'Редактировать фото/видео': (ModerationAds.mod_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file),
         'Редактировать время публикации': (ModerationAds.mod_time_for_publication, 'Введите время в формате\n'
-                                                                                   '<b>11:00 13.03.2024</b>', admin_back),
-        'Редактировать время действия': (ModerationAds.mod_validity, 'Ведите время действия '
-                                                                     'объявления (от 1 до 30 суток)', admin_back),
-
+                                                                                   f'<b>{datetime.datetime.now().strftime("%H:%M %d.%m.%Y")}</b>', admin_back)
     }
 
     await state.set_state(actions[msg.text][0])
@@ -179,17 +174,6 @@ async def edit_time_for_publication(msg: Message, state: FSMContext):
     await state.update_data({'public_time': msg.text})
     await state.set_state(ModerationAds.mod_preview)
     await moderation_func(msg, state)
-
-
-@admin_router.message(ModerationAds.mod_validity, F.text.regexp(r'\d{1,2}'))
-async def edit_validity(msg: Message, state: FSMContext):
-    """Здесь пользователь редактирует желаемое время действия объявления"""
-    if 1 <= int(msg.text) <= 30:
-        await state.update_data({'validity': int(msg.text)})
-        await state.set_state(ModerationAds.mod_preview)
-        await moderation_func(msg, state)
-    else:
-        await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
 
 
 @admin_router.message(F.text == 'Вернуться в главное меню')

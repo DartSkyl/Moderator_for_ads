@@ -50,10 +50,9 @@ moderation_keyboard = ReplyKeyboardMarkup(
                 [KeyboardButton(text='Отправить на публикацию')],
                 [KeyboardButton(text='Редактировать текст'),
                  KeyboardButton(text='Редактировать фото/видео')],
-                [KeyboardButton(text='Редактировать время публикации'),
-                 KeyboardButton(text='Редактировать время действия')],
-                [KeyboardButton(text='Отказать в публикации')],
-                [KeyboardButton(text='Вернуться в главное меню')]
+                [KeyboardButton(text='Редактировать время публикации'),],
+                [KeyboardButton(text='Отказать в публикации'),
+                 KeyboardButton(text='Вернуться в главное меню')]
         ],
         resize_keyboard=True
 )
@@ -63,11 +62,15 @@ admin_preview_keyboard = ReplyKeyboardMarkup(
                 [KeyboardButton(text='Отправить на публикацию')],
                 [KeyboardButton(text='Редактировать текст'),
                  KeyboardButton(text='Редактировать фото/видео')],
-                [KeyboardButton(text='Редактировать время публикации'),
-                 KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Редактировать время публикации')],
                 [KeyboardButton(text='Удалить объявление')]
         ],
         resize_keyboard=True
+)
+
+admin_no_time = ReplyKeyboardMarkup(
+    keyboard=[[KeyboardButton(text='Опубликовать сразу')]],
+    resize_keyboard=True
 )
 
 view_queue = ReplyKeyboardMarkup(
@@ -89,11 +92,9 @@ confirm = ReplyKeyboardMarkup(
 
 edit_public_keyboard = ReplyKeyboardMarkup(
         keyboard=[
-                # [KeyboardButton(text='Сохранить изменения')],
                 [KeyboardButton(text='Редактировать текст'),
                  KeyboardButton(text='Редактировать фото/видео')],
-                [KeyboardButton(text='Редактировать время публикации'),
-                 KeyboardButton(text='Редактировать время действия')],
+                [KeyboardButton(text='Редактировать время публикации')],
                 [KeyboardButton(text='Удалить объявление')],
                 [KeyboardButton(text='Вернуться в очередь на публикацию')]
         ],

@@ -42,24 +42,20 @@ class BotBase:
                                      "text TEXT,"
                                      "file_id TEXT,"
                                      "user_id BIGINT,"
-                                     "public_time VARCHAR(20),"
-                                     "validity INT)")
+                                     "public_time VARCHAR(20));")
 
             await connection.execute("CREATE TABLE IF NOT EXISTS pub_queue"
                                      "(container_id VARCHAR(10) PRIMARY KEY,"
                                      "text TEXT,"
                                      "file_id TEXT,"
                                      "user_id BIGINT,"
-                                     "public_time VARCHAR(20),"
-                                     "validity INT)")
+                                     "public_time VARCHAR(20));")
             pass
 
-    async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, validity: int):
+    async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
         """Добавляем контейнер в таблицу модерации"""
         async with self.pool.acquire() as connection:
-            await connection.execute(f"INSERT INTO public.mod_queue"
-                                     f"(container_id, text, file_id, user_id, public_time, validity)"
-                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {validity});")
+            await connection.execute(f"INSERT INTO public.mod_queue (container_id, text, file_id, user_id, public_time) VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}');")
 
     async def remove_ads_mod(self, container_id: str):
         """Удаляем контейнер по ID"""
@@ -72,12 +68,12 @@ class BotBase:
             result = await connection.fetch(f"SELECT * FROM public.mod_queue")
             return result
 
-    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, validity: int):
+    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
         """Добавляем контейнер в таблицу модерации"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.pub_queue"
-                                     f"(container_id, text, file_id, user_id, public_time, validity)"
-                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {validity})"
+                                     f"(container_id, text, file_id, user_id, public_time)"
+                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}')"
                                      f"ON CONFLICT (container_id) DO UPDATE SET public_time = '{public_time}';")
 
     async def remove_ads_pub(self, container_id: str):

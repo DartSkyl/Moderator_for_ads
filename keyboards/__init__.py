@@ -1,10 +1,9 @@
 from .reply.user_keyboard import (main_user_keyboard, user_cancel, user_file,
-                                  user_file_2, preview_keyboard, user_back)
-from .inline.user_keyboard import content_selection
+                                  user_file_2, preview_keyboard, user_back, user_no_time)
 from .reply.admin_keyboard import (main_admin_keyboard, admin_cancel,
                                    moderation_keyboard, admin_file, admin_back,
                                    view_queue, edit_public_keyboard, admin_back_2, admin_file_2,
-                                   admin_preview_keyboard,
+                                   admin_preview_keyboard, admin_no_time,
                                    confirm, admin_create_file)
 
 __all__ = (
@@ -14,9 +13,9 @@ __all__ = (
     "user_cancel",
     "user_file",
     "user_file_2",
-    "content_selection",
     "preview_keyboard",
     "user_back",
+    "user_no_time",
 
     # Клавиатуры администраторов
     "main_admin_keyboard",
@@ -30,5 +29,6 @@ __all__ = (
     "admin_file_2",
     "admin_preview_keyboard",
     "confirm",
-    "admin_create_file"
+    "admin_create_file",
+    "admin_no_time"
 )
