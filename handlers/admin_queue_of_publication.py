@@ -1,3 +1,4 @@
+import datetime
 from utils import admin_router, queue_for_publication
 from keyboards import (main_admin_keyboard, moderation_keyboard,
                        admin_file_2, admin_back_2, view_queue, edit_public_keyboard, confirm)
@@ -96,7 +97,7 @@ async def moderation_text(msg: Message, state: FSMContext):
         'Редактировать фото/видео': (ModerationAds.pub_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file_2),
         'Редактировать время публикации': (ModerationAds.pub_time_for_publication, 'Введите время в формате\n'
-                                                                                   '<b>11:00 13.03.2024</b>', admin_back_2),
+                                                                                   f'<b>{datetime.datetime.now().strftime("%H:%M %d.%m.%Y")}</b>', admin_back_2),
         'Удалить объявление': (ModerationAds.pub_delete, 'Вы уверены❓', confirm)
     }
 
@@ -173,6 +174,7 @@ async def edit_time_for_publication(msg: Message, state: FSMContext):
     """Здесь администратор редактирует время публикации"""
     edit_ads = (await state.get_data())['edit_ads']
     edit_ads.public_time = msg.text
+    edit_ads.time_index = int(datetime.datetime.strptime(msg.text, "%H:%M %d.%m.%Y").timestamp())
     await queue_for_publication.edit_time_for_publication(edit_ads)
     await state.set_state(ModerationAds.pub_preview)
     await demonstrate_func(msg, state, edit_ads)

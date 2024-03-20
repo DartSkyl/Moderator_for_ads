@@ -69,6 +69,8 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
         public_time=ads_items['public_time'],
+        time_index=int(datetime.datetime.strptime(ads_items['public_time'], "%H:%M %d.%m.%Y").timestamp())
+        if ads_items['public_time'] != 'None' else None
     )
     await queue_for_moderation.remove_ads_from_queue(container_id=ads_items['container_id'])
     await db.remove_ads_mod(container_id=ads_items['container_id'])

@@ -49,7 +49,8 @@ class BotBase:
                                      "text TEXT,"
                                      "file_id TEXT,"
                                      "user_id BIGINT,"
-                                     "public_time VARCHAR(20));")
+                                     "public_time VARCHAR(20),"
+                                     "time_index BIGINT);")
             pass
 
     async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
@@ -68,13 +69,13 @@ class BotBase:
             result = await connection.fetch(f"SELECT * FROM public.mod_queue")
             return result
 
-    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
+    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, time_index: int):
         """Добавляем контейнер в таблицу модерации"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.pub_queue"
-                                     f"(container_id, text, file_id, user_id, public_time)"
-                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}')"
-                                     f"ON CONFLICT (container_id) DO UPDATE SET public_time = '{public_time}';")
+                                     f"(container_id, text, file_id, user_id, public_time, time_index)"
+                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {time_index})"
+                                     f"ON CONFLICT (container_id) DO UPDATE SET public_time = '{public_time}', time_index = {time_index};")
 
     async def remove_ads_pub(self, container_id: str):
         """Удаляем контейнер по ID"""

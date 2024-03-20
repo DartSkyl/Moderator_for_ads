@@ -23,7 +23,7 @@ class QueueForPublication:
     def __init__(self):
         self.ads_list = list()
 
-    async def add_ads_in_queue(self, container_id, text, user_id, mediafile, public_time):
+    async def add_ads_in_queue(self, container_id, text, user_id, mediafile, public_time, time_index):
         """Здесь происходит добавление объявления в очередь на публикацию"""
         container = ContainerForAds(
             container_id=container_id,
@@ -31,12 +31,25 @@ class QueueForPublication:
             user_id=user_id,
             file_id=mediafile,
             public_time=public_time,
+            time_index=time_index
         )
-        self.ads_list.append(container)
+
+        # Ниже описанная конструкция нужна для сортировки объявлений при добавлении в очередь на публикацию
+        if time_index:
+            if len(self.ads_list) > 0:
+                for i_elem in range(len(self.ads_list)):
+                    if self.ads_list[i_elem].time_index >= container.time_index:
+                        self.ads_list.insert(i_elem, container)
+                        break
+                else:
+                    self.ads_list.append(container)
+            else:
+                self.ads_list.append(container)
 
         await publisher.add_ads_in_publisher(container)  # noqa
 
-    async def add_container_in_db(self, container: ContainerForAds):
+    @staticmethod
+    async def add_container_in_db(container: ContainerForAds):
         file_id_from_for_db = ''
         if container.file_id:
             for elem in container.file_id:
@@ -51,6 +64,7 @@ class QueueForPublication:
             user_id=container.user_id,
             file_id=file_id_from_for_db,
             public_time=container.public_time,
+            time_index=container.time_index
         )
 
     async def load_queue_from_base(self):
@@ -71,10 +85,12 @@ class QueueForPublication:
                 user_id=ads['user_id'],
                 file_id=file_id_list,
                 public_time=ads['public_time'],
+                time_index=ads['time_index']
             )
             self.ads_list.append(container)
 
-    async def edit_time_for_publication(self, ads: ContainerForAds):
+    @staticmethod
+    async def edit_time_for_publication(ads: ContainerForAds):
         """Здесь изменяем время для публикации в планировщике"""
         # По сути, просто объявляем задачу заново
         await publisher.add_ads_in_publisher(ads)  # noqa
@@ -110,11 +126,6 @@ async def publisher_function(ads: ContainerForAds, shed=False):
         for elem in queue_for_publication.ads_list:
             if elem.container_id == ads.container_id:
                 await queue_for_publication.remove_ads_container(elem)
-
-
-async def auto_remove(message_id: int):
-    """Функция автоматического удаления объявлений"""
-    await bot.delete_message(chat_id=MAIN_GROUP_ID, message_id=message_id)
 
 
 class Publisher:

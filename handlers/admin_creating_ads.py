@@ -134,7 +134,9 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         text=ads_items['text'],
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
-        public_time=ads_items['public_time']
+        public_time=ads_items['public_time'],
+        time_index=int(datetime.datetime.strptime(ads_items['public_time'], "%H:%M %d.%m.%Y").timestamp())
+        if ads_items['public_time'] != 'None' else None
     )
     await msg.answer(text='Объявление отправлено на публикацию', reply_markup=main_admin_keyboard)
     await state.clear()
