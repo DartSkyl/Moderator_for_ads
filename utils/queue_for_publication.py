@@ -110,7 +110,10 @@ class QueueForPublication:
 
     async def remove_ads_container(self, container: ContainerForAds):
         """Удаляет контейнер из списка"""
-        self.ads_list.remove(container)
+        try:
+            self.ads_list.remove(container)
+        except ValueError:
+            pass
 
 
 queue_for_publication = QueueForPublication()
