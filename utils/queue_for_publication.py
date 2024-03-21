@@ -87,7 +87,16 @@ class QueueForPublication:
                 public_time=ads['public_time'],
                 time_index=ads['time_index']
             )
-            self.ads_list.append(container)
+
+            if len(self.ads_list) > 0:
+                for i_elem in range(len(self.ads_list)):
+                    if self.ads_list[i_elem].time_index >= container.time_index:
+                        self.ads_list.insert(i_elem, container)
+                        break
+                else:
+                    self.ads_list.append(container)
+            else:
+                self.ads_list.append(container)
 
     @staticmethod
     async def edit_time_for_publication(ads: ContainerForAds):
