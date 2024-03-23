@@ -3,7 +3,7 @@ import asyncio
 from utils import users_router, queue_for_moderation
 from keyboards import main_user_keyboard, user_cancel, preview_keyboard, user_file, user_file_2, user_back, user_no_time
 from states import CreatingAds
-from loader import bot, db
+from loader import bot
 
 from aiogram.types import Message
 from aiogram import F, html
@@ -48,7 +48,8 @@ async def cancel(msg: Message, state: FSMContext):
 async def started_creating_ads(msg: Message, state: FSMContext):
     """Данный хэндлер запускает создание объявления"""
     await state.set_state(CreatingAds.adding_text)
-    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа):',
+    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)\n'
+                          '❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru',
                      reply_markup=user_cancel)
 
 
@@ -121,22 +122,9 @@ async def setting_the_desired_time(msg: Message, state: FSMContext):
 @users_router.message(CreatingAds.time_for_publication, F.text == 'Опубликовать сразу')
 async def time_error_input(msg: Message, state: FSMContext):
     """Хэндлер неверного ввода времени публикации"""
-    # await msg.answer(text='Неверный формат времени или даты!\nПовторите попытку\n'
-    #                       'Необходимый формат <b>11:00 13.03.2024</b>')
     await state.update_data({'public_time': 'None'})
     await state.set_state(CreatingAds.preview)
     await preview_func(msg, state)
-
-
-# @users_router.message(CreatingAds.validity, F.text.regexp(r'\d{1,2}'))
-# async def validity_input(msg: Message, state: FSMContext):
-#     """Здесь пользователь вводит желаемый срок действия объявления"""
-#     if 1 <= int(msg.text) <= 30:
-#         await state.update_data({'validity': int(msg.text)})
-#         await state.set_state(CreatingAds.preview)
-#         await preview_func(msg, state)
-#     else:
-#         await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')
 
 
 @users_router.message(F.text == 'Отправить на модерацию')
@@ -165,7 +153,7 @@ async def delete_created_ads(msg: Message, state: FSMContext):
 async def action_after_preview(msg: Message, state: FSMContext):
     """Здесь пользователь выбирает действие для редактирования"""
     actions = {
-        'Редактировать текст': (CreatingAds.edit_text, 'Введите новый текст:', user_back),
+        'Редактировать текст': (CreatingAds.edit_text, 'Введите новый текст\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru', user_back),
         'Редактировать фото/видео': (CreatingAds.edit_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                  'и/или нажмите кнопку "Дальше ▶️"', user_file_2),
         'Редактировать время публикации': (CreatingAds.edit_time_for_publication, 'Введите желаемое время в формате\n'
@@ -240,14 +228,3 @@ async def edit_time_for_publication(msg: Message, state: FSMContext):
     await state.update_data({'public_time': msg.text})
     await state.set_state(CreatingAds.preview)
     await preview_func(msg, state)
-
-
-# @users_router.message(CreatingAds.edit_validity, F.text.regexp(r'\d{1,2}'))
-# async def edit_validity(msg: Message, state: FSMContext):
-#     """Здесь пользователь редактирует желаемое время действия объявления"""
-#     if 1 <= int(msg.text) <= 30:
-#         await state.update_data({'validity': int(msg.text)})
-#         await state.set_state(CreatingAds.preview)
-#         await preview_func(msg, state)
-#     else:
-#         await msg.answer(text='Неверный ввод! Допустимо от 1 до 30 суток. Повторите попытку')

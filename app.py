@@ -18,7 +18,8 @@ async def start_up():
     # Запускаем очередь на модерацию
     await queue_for_moderation.load_queue_from_base()
     await queue_for_publication.load_queue_from_base()
-    await bot.set_my_commands(commands=[BotCommand(command='start', description='в любой непонятной ситуации')])
+    await bot.set_my_commands(commands=[BotCommand(command='start',
+                                                   description='Нажать для начала взаимодействия или рестарта')])
     # Стартуем! Я начну стрелять!
     with open('bot.log', 'a') as log_file:
         log_file.write(f'\n========== New bot session {datetime.datetime.now()} ==========\n\n')

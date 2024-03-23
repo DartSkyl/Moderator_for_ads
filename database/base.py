@@ -1,7 +1,4 @@
-import time
-from typing import List
 import asyncpg as apg
-from asyncpg import Record
 
 
 class BotBase:

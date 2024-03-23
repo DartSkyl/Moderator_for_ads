@@ -1,6 +1,6 @@
 import datetime
 from utils import admin_router, queue_for_moderation, queue_for_publication
-from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back, admin_no_time
+from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back
 from states import ModerationAds
 from loader import bot, db
 
@@ -101,7 +101,7 @@ async def send_comment(msg: Message, state: FSMContext):
 async def moderation_text(msg: Message, state: FSMContext):
     """Здесь администратор выбирает действие для модерации"""
     actions = {
-        'Редактировать текст': (ModerationAds.mod_text, 'Введите новый текст:', admin_back),
+        'Редактировать текст': (ModerationAds.mod_text, 'Введите новый текст\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru', admin_back),
         'Редактировать фото/видео': (ModerationAds.mod_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file),
         'Редактировать время публикации': (ModerationAds.mod_time_for_publication, 'Введите время в формате\n'

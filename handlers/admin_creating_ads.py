@@ -3,8 +3,8 @@ import asyncio
 from random import choices
 import string
 from utils import admin_router, queue_for_publication
-from keyboards import (main_admin_keyboard, moderation_keyboard, admin_cancel, admin_file, admin_back,
-                       admin_file_2, admin_back_2, view_queue, edit_public_keyboard, admin_preview_keyboard,
+from keyboards import (main_admin_keyboard, admin_cancel, admin_file, admin_back,
+                       admin_file_2, admin_preview_keyboard,
                        admin_create_file, admin_no_time)
 from states import AdminCreated
 from loader import bot
@@ -45,7 +45,8 @@ async def cancel(msg: Message, state: FSMContext):
 async def started_creating_ads(msg: Message, state: FSMContext):
     """Данный хэндлер запускает создание объявления"""
     await state.set_state(AdminCreated.adding_text)
-    await msg.answer(text='Введите текст будущего объявления (максимум 1024 символа):',
+    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)'
+                          '\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru',
                      reply_markup=admin_cancel)
 
 
@@ -153,7 +154,7 @@ async def delete_created_ads(msg: Message, state: FSMContext):
 async def action_after_preview(msg: Message, state: FSMContext):
     """Здесь пользователь выбирает действие для редактирования"""
     actions = {
-        'Редактировать текст': (AdminCreated.edit_text, 'Введите новый текст:', admin_back),
+        'Редактировать текст': (AdminCreated.edit_text, 'Введите новый текст\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru', admin_back),
         'Редактировать фото/видео': (AdminCreated.edit_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file_2),
         'Редактировать время публикации': (AdminCreated.edit_time_for_publication, 'Введите желаемое время в формате\n'

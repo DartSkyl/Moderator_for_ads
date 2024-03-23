@@ -1,7 +1,6 @@
-import time
 import datetime
 from config_data.config import PG_URI, MAIN_GROUP_ID
-from loader import db, bot, admins_id
+from loader import db, bot
 from .container_for_ads import ContainerForAds
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler

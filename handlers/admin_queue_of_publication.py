@@ -1,11 +1,11 @@
 import datetime
 from utils import admin_router, queue_for_publication
-from keyboards import (main_admin_keyboard, moderation_keyboard,
+from keyboards import (main_admin_keyboard,
                        admin_file_2, admin_back_2, view_queue, edit_public_keyboard, confirm)
 from states import ModerationAds
 from loader import bot, db
 
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message
 from aiogram import F, html
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
@@ -93,7 +93,7 @@ async def edit_public_ads(msg: Message, state: FSMContext):
 async def moderation_text(msg: Message, state: FSMContext):
     """Здесь администратор выбирает действие для модерации"""
     actions = {
-        'Редактировать текст': (ModerationAds.pub_text, 'Введите новый текст:', admin_back_2),
+        'Редактировать текст': (ModerationAds.pub_text, 'Введите новый текст\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru', admin_back_2),
         'Редактировать фото/видео': (ModerationAds.pub_mediafile, 'Добавьте фото или видео (до 7 файлов) '
                                                                   'и/или нажмите кнопку "Дальше ▶️"', admin_file_2),
         'Редактировать время публикации': (ModerationAds.pub_time_for_publication, 'Введите время в формате\n'

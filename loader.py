@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 db = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
 
-bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
+bot = Bot(token=BOT_TOKEN, parse_mode="HTML", disable_web_page_preview=True)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 # В этом списке будем хранить ID всех администраторов
