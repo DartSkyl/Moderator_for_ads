@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import handlers  # noqa
-from loader import dp, db_connect, bot, admin_list_load, bot
+from loader import dp, db_connect, bot, bot
 from utils import (admin_router, users_router, create_publisher, queue_for_moderation, queue_for_publication)
 from aiogram.types.bot_command import BotCommand
 
@@ -14,7 +14,7 @@ async def start_up():
     #  Подключаемся к базе
     await db_connect()
     #  Загружаем ID администраторов прямо из основной группы
-    await admin_list_load()
+    # await admin_list_load()
     # Запускаем очередь на модерацию
     await queue_for_moderation.load_queue_from_base()
     await queue_for_publication.load_queue_from_base()

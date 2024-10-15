@@ -22,9 +22,9 @@ async def db_connect():
     await db.check_db_structure()
 
 
-async def admin_list_load():
-    """Функция заносит в список ID администраторов из основной группы при включении бота."""
-    admins = await bot.get_chat_administrators(chat_id=MAIN_GROUP_ID)
-    admins = {admin.user.id for admin in admins}
-    for admin_id in admins:
-        admins_id.append(admin_id)
+# async def admin_list_load():
+#     """Функция заносит в список ID администраторов из основной группы при включении бота."""
+#     admins = await bot.get_chat_administrators(chat_id=MAIN_GROUP_ID)
+#     admins = {admin.user.id for admin in admins}
+#     for admin_id in admins:
+#         admins_id.append(admin_id)
