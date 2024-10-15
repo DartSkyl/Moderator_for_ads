@@ -1,4 +1,7 @@
-*__pycache__/*
+__pycache__/
+handlers/__pycache__/
+utils/__pycache__/
+keyboards/__pycache__/
 /venv
 *.log
 .env
