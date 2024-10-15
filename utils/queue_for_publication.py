@@ -1,5 +1,5 @@
 import datetime
-from config_data.config import PG_URI, MAIN_GROUP_ID
+from config import PG_URI, MAIN_GROUP_ID
 from loader import db, bot
 from .container_for_ads import ContainerForAds
 

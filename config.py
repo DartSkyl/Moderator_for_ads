@@ -18,6 +18,7 @@ DB_INFO = (
 PG_URI = f"postgresql+psycopg2://{DB_INFO[0]}:{DB_INFO[1]}@{DB_INFO[3]}/{DB_INFO[2]}"
 
 MAIN_GROUP_ID = int(os.getenv("main_group_id"))
+ADMINS_LIST = [int(i) for i in os.getenv('admin_id').split()]
 
 logging.basicConfig(
     filename='bot.log',

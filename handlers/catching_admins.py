@@ -1,4 +1,4 @@
-from config_data.config import MAIN_GROUP_ID
+from config import MAIN_GROUP_ID
 from loader import admins_id, dp
 from aiogram import F
 from aiogram.types import ChatMember

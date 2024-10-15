@@ -1,7 +1,7 @@
 from typing import List
 
-from database.base import BotBase
-from config_data.config import BOT_TOKEN, DB_INFO, MAIN_GROUP_ID
+from base import BotBase
+from config import BOT_TOKEN, DB_INFO, MAIN_GROUP_ID, ADMINS_LIST
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -13,7 +13,7 @@ bot = Bot(token=BOT_TOKEN, parse_mode="HTML", disable_web_page_preview=True)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 # В этом списке будем хранить ID всех администраторов
-admins_id: List[int] = list()
+admins_id: List[int] = ADMINS_LIST
 
 
 async def db_connect():
