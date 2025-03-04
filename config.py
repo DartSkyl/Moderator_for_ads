@@ -8,7 +8,7 @@ else:
     load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
+# PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
 DB_INFO = (
     os.getenv("db_user"),
     os.getenv("db_pass"),
