@@ -14,7 +14,7 @@ greenlet==3.0.1
 idna==3.4
 magic-filter==1.0.12
 multidict==6.0.4
-psycopg2==2.9.9
+psycopg2-binary
 pydantic==2.3.0
 pydantic_core==2.6.3
 python-dotenv==1.0.0
