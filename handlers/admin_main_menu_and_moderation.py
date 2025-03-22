@@ -18,7 +18,7 @@ async def moderation_func(msg: Message, state: FSMContext):
                      reply_markup=moderation_keyboard, parse_mode='HTML')
     msg_with_time = f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
     if ads_items['mediafile']:  # Если данный список пуст, значит объявление без медиафайлов
-        media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
+        media_group = MediaGroupBuilder(caption=ads_items['text'])
         for mediafile in ads_items['mediafile']:
             media_group.add(type=mediafile[1], media=mediafile[0])
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())

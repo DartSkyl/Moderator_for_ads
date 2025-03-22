@@ -19,7 +19,7 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
                      reply_markup=view_queue, parse_mode='HTML')
     msg_with_time = f'Время публикации: <b>{ads.public_time}</b>\n'
     if ads.file_id:  # Если данный список пуст, значит объявление без медиафайлов
-        media_group = MediaGroupBuilder(caption=html.quote(ads.text))
+        media_group = MediaGroupBuilder(caption=ads.text)
         for mediafile in ads.file_id:
             media_group.add(type=mediafile[1], media=mediafile[0])
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
