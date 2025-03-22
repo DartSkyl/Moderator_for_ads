@@ -11,7 +11,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 db = BotBase(DB_INFO[0], DB_INFO[1], DB_INFO[2], DB_INFO[3])
 
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(
-    parse_mode='HTML',
+    parse_mode='MarkdownV2',
     link_preview_is_disabled=True))
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 

@@ -15,7 +15,7 @@ async def moderation_func(msg: Message, state: FSMContext):
     ads_items = await state.get_data()
     ads_count = await queue_for_moderation.get_quantity()
     await msg.answer(text=f'Объявление для модерации\n(всего объявлений в очереди {ads_count}):',
-                     reply_markup=moderation_keyboard)
+                     reply_markup=moderation_keyboard, parse_mode='HTML')
     msg_with_time = f'Желаемое время публикации: <b>{ads_items["public_time"]}</b>\n'
     if ads_items['mediafile']:  # Если данный список пуст, значит объявление без медиафайлов
         media_group = MediaGroupBuilder(caption=html.quote(ads_items['text']))
@@ -24,9 +24,9 @@ async def moderation_func(msg: Message, state: FSMContext):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads_items['text']))
+        await msg.answer(text=html.quote(ads_items['text']), parse_mode='HTML')
     if ads_items['public_time'] != 'None':
-        await msg.answer(text=msg_with_time)
+        await msg.answer(text=msg_with_time, parse_mode='HTML')
     await state.set_state(ModerationAds.mod_preview)
 
 
@@ -35,7 +35,7 @@ async def start_function(msg: Message):
     """Функция запускается при старте бота и вводе соответствующей команды от имени администратора"""
     await msg.answer(
         text=f'Привет, {html.quote(msg.from_user.first_name)}!\nЖду ваших решений😉',
-        reply_markup=main_admin_keyboard
+        reply_markup=main_admin_keyboard, parse_mode='HTML'
     )
 
 
@@ -45,7 +45,7 @@ async def view_queue_for_moderation(msg: Message, state: FSMContext):
     # Данный метод всегда (если только там не пусто) возвращает первое объявление в списке!
     ads = await queue_for_moderation.get_ads_from_queue()
     if isinstance(ads, str):
-        await msg.answer(text=ads, reply_markup=main_admin_keyboard)
+        await msg.answer(text=ads, reply_markup=main_admin_keyboard, parse_mode='HTML')
         await state.clear()
     else:
         await state.set_state(ModerationAds.mod_preview)
@@ -81,7 +81,7 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
 @admin_router.message(ModerationAds.mod_preview, F.text == 'Отказать в публикации')
 async def refuse_publication(msg: Message, state: FSMContext):
     """Здесь администратор отказывает в публикации"""
-    await msg.answer(text='Введите комментарий к отказу:', reply_markup=admin_back)
+    await msg.answer(text='Введите комментарий к отказу:', reply_markup=admin_back, parse_mode='HTML')
     await state.set_state(ModerationAds.mod_refuse)
 
 
@@ -92,7 +92,7 @@ async def send_comment(msg: Message, state: FSMContext):
     ads_id = (await state.get_data())['container_id']
     await queue_for_moderation.remove_ads_from_queue(container_id=ads_id)
     standard_text = 'Вым было отказано в публикации объявления по причине:\n'
-    await bot.send_message(chat_id=user_id, text=(standard_text + msg.text))
+    await bot.send_message(chat_id=user_id, text=(standard_text + msg.text), parse_mode='HTML')
     await msg.answer(text='Сообщение отправлено')
     await view_queue_for_moderation(msg, state)
 
@@ -109,7 +109,7 @@ async def moderation_text(msg: Message, state: FSMContext):
     }
 
     await state.set_state(actions[msg.text][0])
-    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2])
+    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2], parse_mode='HTML')
     if msg.text == 'Редактировать фото/видео':
         # На случай, если после начала модерации медиафайла, администратор передумает,
         # то вернем файлы на место из backup
@@ -135,10 +135,10 @@ async def edit_text_func(msg: Message, state: FSMContext):
     """Здесь пользователь корректирует текст объявления"""
     if len(msg.text) > 1000:
         await msg.answer(f'Ограничение для объявления 1000 символов '
-                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз')
+                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз', parse_mode='HTML')
     else:
         await state.update_data({'text': msg.text})
-        await msg.answer(text='Текст объявления изменен!')
+        await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
         await state.set_state(ModerationAds.mod_preview)
         await moderation_func(msg, state)
 
@@ -162,10 +162,10 @@ async def edit_mediafile2(msg: Message, state: FSMContext):
     file_id_list = (await state.get_data())['mediafile']
     # смотрим, что бы файлов было не больше разрешенного
     if len(file_id_list) > 7:
-        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file)
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
-        await msg.answer(text='Фото/Видео изменено!')
+        await msg.answer(text='Фото/Видео изменено!', parse_mode='HTML')
         await state.set_state(ModerationAds.mod_preview)
         await moderation_func(msg, state)
 
@@ -183,11 +183,6 @@ async def return_to_the_main_menu(msg: Message, state: FSMContext):
     """Хэндлер возвращает администратора в главное меню"""
     await msg.answer(text='Возврат в главное меню', reply_markup=main_admin_keyboard)
     await state.clear()
-
-
-@admin_router.message(F.text == '📨 Связь с администрацией')
-async def admin_list(msg: Message):
-    await msg.answer(text='Контакт для связи :\n@Mikhail_PPro')
 
 
 @admin_router.message(Command('get_log'))

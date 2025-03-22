@@ -24,9 +24,9 @@ async def preview_func(msg: Message, state: FSMContext):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads_items['text']))
+        await msg.answer(text=html.quote(ads_items['text']), parse_mode='HTML')
     if ads_items["public_time"] != 'None':
-        await msg.answer(text=msg_with_time)
+        await msg.answer(text=msg_with_time, parse_mode='HTML')
     await state.set_state(CreatingAds.preview)
 
 
@@ -34,7 +34,7 @@ async def preview_func(msg: Message, state: FSMContext):
 async def start_function(msg: Message):
     """Функция запускается при старте бота и вводе соответствующей команды от имени пользователя"""
     await msg.answer(text=f'Привет, {html.quote(msg.from_user.first_name)}!\nЖду твоих объявлений😉',
-                     reply_markup=main_user_keyboard)
+                     reply_markup=main_user_keyboard, parse_mode='HTML')
 
 
 @users_router.message(F.text == '🚫 Отмена')
@@ -50,7 +50,7 @@ async def started_creating_ads(msg: Message, state: FSMContext):
     await state.set_state(CreatingAds.adding_text)
     await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)\n'
                           '❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru',
-                     reply_markup=user_cancel)
+                     reply_markup=user_cancel, parse_mode='HTML')
 
 
 @users_router.message(CreatingAds.adding_text, F.text != '🚫 Отмена')
@@ -62,14 +62,14 @@ async def adding_time_or_file(msg: Message, state: FSMContext):
         await state.set_state(CreatingAds.false_state)  # Это нужно для того, что бы когда телеграмм разобьет
         # сообщение на две части не пропустить второе
         await msg.answer(f'Ограничение для объявления 1000 символов '
-                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз')
+                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз', parse_mode='HTML')
         await asyncio.sleep(1)
         await state.set_state(CreatingAds.adding_text)  # И сразу установим стэйт обратно,
         # что бы пользователь мог повторить ввод текста для публикации
 
     else:
         await msg.answer(text='Теперь скиньте фото или видео (до 7 файлов) и/или нажмите кнопку "Дальше ▶️"',
-                         reply_markup=user_file)
+                         reply_markup=user_file, parse_mode='HTML')
         await state.set_state(CreatingAds.adding_mediafile)
         await state.update_data({'mediafile': []})
 
@@ -99,14 +99,14 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
     file_id_list = (await state.get_data())['mediafile']
     # смотрим, что бы файлов было не больше разрешенного
     if len(file_id_list) > 7:
-        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file)
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
         await msg.answer(text="Теперь введите желаемое время и дату для публикации в следующем формате:\n"
                               f"<b>{datetime.datetime.now().strftime('%H:%M %d.%m.%Y')}</b>\n\n"
                               "Если хотите, что бы объявление было опубликовано сразу после модерации, то нажмите\n"
                               "<b>Опубликовать сразу</b>",
-                         reply_markup=user_no_time)
+                         reply_markup=user_no_time, parse_mode='HTML')
         await state.set_state(CreatingAds.time_for_publication)
 
 
@@ -138,14 +138,14 @@ async def send_ads_for_moderation(msg: Message, state: FSMContext):
         public_time=ads_items['public_time'],
         # validity=ads_items['validity']
     )
-    await msg.answer(text='Объявление отправлено на модерацию!', reply_markup=main_user_keyboard)
+    await msg.answer(text='Объявление отправлено на модерацию!', reply_markup=main_user_keyboard, parse_mode='HTML')
     await state.clear()
 
 
 @users_router.message(F.text == 'Удалить объявление')
 async def delete_created_ads(msg: Message, state: FSMContext):
     """Данный хэндлер удаляет только что созданное объявление"""
-    await msg.answer(text='Объявление удалено!', reply_markup=main_user_keyboard)
+    await msg.answer(text='Объявление удалено!', reply_markup=main_user_keyboard, parse_mode='HTML')
     await state.clear()
 
 
@@ -161,7 +161,7 @@ async def action_after_preview(msg: Message, state: FSMContext):
     }
 
     await state.set_state(actions[msg.text][0])
-    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2])
+    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2], parse_mode='HTML')
     if msg.text == 'Редактировать фото/видео':
         # На случай, если после начала модерации медиафайла, пользователь передумает,
         # то вернем файлы на место из backup
@@ -187,10 +187,10 @@ async def edit_text_func(msg: Message, state: FSMContext):
     """Здесь пользователь корректирует текст объявления"""
     if len(msg.text) > 1000:
         await msg.answer(f'Ограничение для объявления 1000 символов '
-                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз')
+                         f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз', parse_mode='HTML')
     else:
         await state.update_data({'text': msg.text})
-        await msg.answer(text='Текст объявления изменен!')
+        await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
         await state.set_state(CreatingAds.preview)
         await preview_func(msg, state)
 
@@ -214,10 +214,10 @@ async def edit_mediafile2(msg: Message, state: FSMContext):
     file_id_list = (await state.get_data())['mediafile']
     # смотрим, что бы файлов было не больше разрешенного
     if len(file_id_list) > 7:
-        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file_2)
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file_2, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
-        await msg.answer(text='Фото/Видео изменено!')
+        await msg.answer(text='Фото/Видео изменено!', parse_mode='HTML')
         await state.set_state(CreatingAds.preview)
         await preview_func(msg, state)
 
@@ -228,3 +228,8 @@ async def edit_time_for_publication(msg: Message, state: FSMContext):
     await state.update_data({'public_time': msg.text})
     await state.set_state(CreatingAds.preview)
     await preview_func(msg, state)
+
+
+@users_router.message(F.text == '📨 Связь с администрацией')
+async def admin_list(msg: Message):
+    await msg.answer(text='Контакт для связи :\n@Mikhail_PPro', parse_mode='HTML')

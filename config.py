@@ -8,7 +8,7 @@ else:
     load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-# PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN")
+
 DB_INFO = (
     os.getenv("db_user"),
     os.getenv("db_pass"),
@@ -20,9 +20,9 @@ PG_URI = f"postgresql+psycopg2://{DB_INFO[0]}:{DB_INFO[1]}@{DB_INFO[3]}/{DB_INFO
 MAIN_GROUP_ID = int(os.getenv("main_group_id"))
 ADMINS_LIST = [int(i) for i in os.getenv('admin_id').split()]
 
-logging.basicConfig(
-    filename='bot.log',
-    filemode='a',
-    format="%(asctime)s %(levelname)s %(message)s"
-)
-logging.getLogger().setLevel(logging.ERROR)
+# logging.basicConfig(
+#     filename='bot.log',
+#     filemode='a',
+#     format="%(asctime)s %(levelname)s %(message)s"
+# )
+# logging.getLogger().setLevel(logging.ERROR)

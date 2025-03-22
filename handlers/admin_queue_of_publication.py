@@ -16,7 +16,7 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
     queue_info = await state.get_data()
 
     await msg.answer(text=f'Объявление {queue_info["page"]}/{queue_info["count"]}:',
-                     reply_markup=view_queue)
+                     reply_markup=view_queue, parse_mode='HTML')
     msg_with_time = f'Время публикации: <b>{ads.public_time}</b>\n'
     if ads.file_id:  # Если данный список пуст, значит объявление без медиафайлов
         media_group = MediaGroupBuilder(caption=html.quote(ads.text))
@@ -25,9 +25,9 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads.text))
+        await msg.answer(text=html.quote(ads.text), parse_mode='HTML')
     if ads.public_time != 'None':
-        await msg.answer(text=msg_with_time)
+        await msg.answer(text=msg_with_time, parse_mode='HTML')
     await state.set_state(ModerationAds.pub_preview)
 
 
@@ -45,7 +45,7 @@ async def view_queue_for_publication(msg: Message, state: FSMContext):
         })
         await demonstrate_func(msg=msg, state=state, ads=ads_list[0])
     else:
-        await msg.answer(text=ads_list, reply_markup=main_admin_keyboard)
+        await msg.answer(text=ads_list, reply_markup=main_admin_keyboard, parse_mode='HTML')
 
 
 @admin_router.message(ModerationAds.pub_preview, F.text == 'Следующее объявление ▶️')
@@ -60,7 +60,7 @@ async def next_ads(msg: Message, state: FSMContext):
             await demonstrate_func(msg=msg, state=state, ads=queue_info['queue'][queue_info['page']])
 
         else:
-            await msg.answer(text='Это конец очереди!')
+            await msg.answer(text='Это конец очереди!', parse_mode='HTML')
     except IndexError:
         await view_queue_for_publication(msg, state)
 
@@ -75,7 +75,7 @@ async def previous_ads(msg: Message, state: FSMContext):
         await demonstrate_func(msg=msg, state=state, ads=queue_info['queue'][queue_info['page'] - 2])
 
     else:
-        await msg.answer(text='Это начало очереди!')
+        await msg.answer(text='Это начало очереди!', parse_mode='HTML')
 
 
 @admin_router.message(ModerationAds.pub_preview, F.text == 'Редактировать объявление')
@@ -86,7 +86,7 @@ async def edit_public_ads(msg: Message, state: FSMContext):
 
     # Сохраним объявление, которое будем редактировать
     await state.update_data({'edit_ads': ads})
-    await msg.answer(text='Что редактируем?', reply_markup=edit_public_keyboard)
+    await msg.answer(text='Что редактируем?', reply_markup=edit_public_keyboard, parse_mode='HTML')
 
 
 @admin_router.message(ModerationAds.pub_preview, F.text != 'Вернуться в очередь на публикацию')
@@ -102,7 +102,7 @@ async def moderation_text(msg: Message, state: FSMContext):
     }
 
     await state.set_state(actions[msg.text][0])
-    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2])
+    await msg.answer(text=actions[msg.text][1], reply_markup=actions[msg.text][2], parse_mode='HTML')
     if msg.text == 'Редактировать фото/видео':
         # На случай, если после начала модерации медиафайла, администратор передумает,
         # то вернем файлы на место из backup
@@ -135,7 +135,7 @@ async def edit_text_func(msg: Message, state: FSMContext):
     """Здесь пользователь корректирует текст объявления"""
     edit_ads = (await state.get_data())['edit_ads']
     edit_ads.text = msg.text
-    await msg.answer(text='Текст объявления изменен!')
+    await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
     await state.set_state(ModerationAds.pub_preview)
     await demonstrate_func(msg, state, edit_ads)
 
@@ -160,11 +160,11 @@ async def edit_mediafile2(msg: Message, state: FSMContext):
     edit_ads = (await state.get_data())['edit_ads']
     # смотрим, что бы файлов было не больше разрешенного
     if len(file_id_list) > 7:
-        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file_2)
+        await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file_2, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
         edit_ads.file_id = file_id_list
-        await msg.answer(text='Фото/Видео изменено!')
+        await msg.answer(text='Фото/Видео изменено!', parse_mode='HTML')
         await state.set_state(ModerationAds.pub_preview)
         await demonstrate_func(msg, state, edit_ads)
 
