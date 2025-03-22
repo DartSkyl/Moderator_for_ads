@@ -24,7 +24,7 @@ async def moderation_func(msg: Message, state: FSMContext):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads_items['text']), parse_mode='HTML')
+        await msg.answer(text=ads_items['text'])
     if ads_items['public_time'] != 'None':
         await msg.answer(text=msg_with_time, parse_mode='HTML')
     await state.set_state(ModerationAds.mod_preview)
@@ -137,7 +137,7 @@ async def edit_text_func(msg: Message, state: FSMContext):
         await msg.answer(f'Ограничение для объявления 1000 символов '
                          f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз', parse_mode='HTML')
     else:
-        await state.update_data({'text': msg.text})
+        await state.update_data({'text': msg.md_text})
         await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
         await state.set_state(ModerationAds.mod_preview)
         await moderation_func(msg, state)

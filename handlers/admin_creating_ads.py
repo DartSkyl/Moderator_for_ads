@@ -27,7 +27,7 @@ async def preview_func(msg: Message, state: FSMContext):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads_items['text']), parse_mode='HTML')
+        await msg.answer(text=ads_items['text'])
 
     if ads_items['public_time'] != 'None':
         await msg.answer(text=msg_with_time, parse_mode='HTML')
@@ -70,7 +70,7 @@ async def adding_time_or_file(msg: Message, state: FSMContext):
         await state.set_state(AdminCreated.adding_mediafile)
         await state.update_data({'mediafile': []})
 
-        await state.update_data({'text': msg.text, 'user_id': msg.from_user.id})
+        await state.update_data({'text': msg.md_text, 'user_id': msg.from_user.id})
 
 
 @admin_router.message(AdminCreated.adding_mediafile, F.text != 'Дальше ▶️')
@@ -191,7 +191,7 @@ async def edit_text_func(msg: Message, state: FSMContext):
         await msg.answer(f'Ограничение для объявления 1000 символов '
                          f'(Вы ввели {len(msg.text)} символа).\nПопробуйте еще раз', parse_mode='HTML')
     else:
-        await state.update_data({'text': msg.text})
+        await state.update_data({'text': msg.md_text})
         await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
         await state.set_state(AdminCreated.preview)
         await preview_func(msg, state)

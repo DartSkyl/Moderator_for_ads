@@ -25,7 +25,7 @@ async def demonstrate_func(msg: Message, state: FSMContext, ads):
         await bot.send_media_group(chat_id=msg.from_user.id, media=media_group.build())
 
     else:
-        await msg.answer(text=html.quote(ads.text), parse_mode='HTML')
+        await msg.answer(text=ads.text)
     if ads.public_time != 'None':
         await msg.answer(text=msg_with_time, parse_mode='HTML')
     await state.set_state(ModerationAds.pub_preview)
@@ -134,7 +134,7 @@ async def back_func(msg: Message, state: FSMContext):
 async def edit_text_func(msg: Message, state: FSMContext):
     """Здесь пользователь корректирует текст объявления"""
     edit_ads = (await state.get_data())['edit_ads']
-    edit_ads.text = msg.text
+    edit_ads.text = msg.md_text
     await msg.answer(text='Текст объявления изменен!', parse_mode='HTML')
     await state.set_state(ModerationAds.pub_preview)
     await demonstrate_func(msg, state, edit_ads)
