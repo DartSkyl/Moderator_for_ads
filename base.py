@@ -27,13 +27,6 @@ class BotBase:
 
     async def check_db_structure(self) -> None:
         async with self.pool.acquire() as connection:
-            # self.container_id = container_id
-            # self.text = text
-            # self.file_id = file_id
-            # self.user_id = user_id
-            # self.public_time = public_time
-            # self.validity = validity
-
             await connection.execute("CREATE TABLE IF NOT EXISTS mod_queue"
                                      "(container_id VARCHAR(10) PRIMARY KEY,"
                                      "text TEXT,"
@@ -48,7 +41,6 @@ class BotBase:
                                      "user_id BIGINT,"
                                      "public_time VARCHAR(20),"
                                      "time_index BIGINT);")
-            pass
 
     async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
         """Добавляем контейнер в таблицу модерации"""

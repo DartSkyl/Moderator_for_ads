@@ -31,8 +31,9 @@ async def moderation_func(msg: Message, state: FSMContext):
 
 
 @admin_router.message(Command('start'))
-async def start_function(msg: Message):
+async def start_function(msg: Message, state: FSMContext):
     """Функция запускается при старте бота и вводе соответствующей команды от имени администратора"""
+    await state.clear()
     await msg.answer(
         text=f'Привет, {html.quote(msg.from_user.first_name)}!\nЖду ваших решений😉',
         reply_markup=main_admin_keyboard, parse_mode='HTML'
