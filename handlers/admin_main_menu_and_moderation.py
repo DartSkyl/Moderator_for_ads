@@ -1,10 +1,10 @@
 import datetime
 from utils import admin_router, queue_for_moderation, queue_for_publication
-from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back
+from keyboards import main_admin_keyboard, moderation_keyboard, admin_file, admin_back, channel_mang, rm_channel_keys
 from states import ModerationAds
 from loader import bot, db
 
-from aiogram.types import Message, FSInputFile
+from aiogram.types import Message, CallbackQuery
 from aiogram import F, html
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -56,6 +56,7 @@ async def view_queue_for_moderation(msg: Message, state: FSMContext):
             'user_id': ads.user_id,
             'mediafile': ads.file_id,
             'public_time': ads.public_time,
+            'public_channel': ads.public_channel
         })
         await moderation_func(msg=msg, state=state)
 
@@ -70,6 +71,7 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
         public_time=ads_items['public_time'],
+        public_channel=ads_items['public_channel'],
         time_index=int(datetime.datetime.strptime(ads_items['public_time'], "%H:%M %d.%m.%Y").timestamp())
         if ads_items['public_time'] != 'None' else None
     )
@@ -186,8 +188,43 @@ async def return_to_the_main_menu(msg: Message, state: FSMContext):
     await state.clear()
 
 
-@admin_router.message(Command('get_log'))
-async def get_bot_log(msg: Message):
-    """Команда выгружает в чат файл с логом бота"""
-    log_file = FSInputFile('bot.log')
-    await msg.answer_document(document=log_file)
+# ====================
+# Управление каналами для публикаций
+# ====================
+
+
+@admin_router.message(F.text == '📣 Каналы для публикаций')
+async def channels_menu(msg: Message):
+    """Начинаем добавление канала для публикации"""
+    await msg.answer('Выберете действие:', reply_markup=channel_mang)
+
+
+@admin_router.message(F.text == 'Добавить канал')
+async def adding_channels_start(msg: Message, state: FSMContext):
+    """Начинаем добавление канала для публикации"""
+    await state.set_state(ModerationAds.add_channel)
+    await msg.answer('Перешлите сюда сообщение из канала который хотите добавить')
+
+
+@admin_router.message(ModerationAds.add_channel)
+async def catch_new_channel(msg: Message, state: FSMContext):
+    """Ловим пересланное сообщение из добавляемого канала"""
+    if msg.forward_from_chat:
+        await db.add_new_channel(msg.forward_from_chat.id, msg.forward_from_chat.title)
+        await state.clear()
+        await msg.answer('Канал добавлен', reply_markup=main_admin_keyboard)
+
+
+@admin_router.message(F.text == 'Удалить канал')
+async def open_remove_menu(msg: Message):
+    """Открываем меню для удаления каналов"""
+    all_channels = await db.get_channels()
+    await msg.answer('Выберете канал для удаления:', reply_markup=await rm_channel_keys(all_channels))
+
+
+@admin_router.callback_query(F.data.startswith('rm_id_'))
+async def remove_channel_func(callback: CallbackQuery):
+    """Удаляем канал для публикации"""
+    await callback.answer()
+    await db.remove_channel(int(callback.data.replace('rm_id_', '')))
+    await callback.message.answer('Канал удален', reply_markup=main_admin_keyboard)

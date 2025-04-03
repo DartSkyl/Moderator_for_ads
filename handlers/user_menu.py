@@ -1,15 +1,18 @@
 import datetime
 import asyncio
 from utils import users_router, queue_for_moderation
-from keyboards import main_user_keyboard, user_cancel, preview_keyboard, user_file, user_file_2, user_back, user_no_time
+from keyboards import (main_user_keyboard, user_cancel,
+                       preview_keyboard, user_file, user_file_2,
+                       user_back, user_no_time, channels_choice_keys)
 from states import CreatingAds
-from loader import bot
+from loader import bot, db
 
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram import F, html
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
+import arrow
 
 
 async def preview_func(msg: Message, state: FSMContext):
@@ -48,8 +51,7 @@ async def cancel(msg: Message, state: FSMContext):
 async def started_creating_ads(msg: Message, state: FSMContext):
     """Данный хэндлер запускает создание объявления"""
     await state.set_state(CreatingAds.adding_text)
-    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)\n'
-                          '❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru',
+    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)\n',
                      reply_markup=user_cancel, parse_mode='HTML')
 
 
@@ -102,8 +104,13 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
         await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=user_file, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
+        # '%H:%M %d.%m.%Y'
         await msg.answer(text="Теперь введите желаемое время и дату для публикации в следующем формате:\n"
-                              f"<b>{datetime.datetime.now().strftime('%H:%M %d.%m.%Y')}</b>\n\n"
+                              f"<code>{arrow.utcnow().now().strftime('%H:%M %d.%m.%Y')}</code>\n\n"
+                              f"Готовые варианты:\n"
+                              f"<code>{arrow.utcnow().now().shift(days=1).strftime('%H:%M %d.%m.%Y')}</code> - через сутки\n"
+                              f"<code>{arrow.utcnow().now().shift(hours=1).strftime('%H:%M %d.%m.%Y')}</code> - через час\n"
+                              f"<code>{arrow.utcnow().now().shift(minutes=10).strftime('%H:%M %d.%m.%Y')}</code> - через 10 минут\n\n"
                               "Если хотите, что бы объявление было опубликовано сразу после модерации, то нажмите\n"
                               "<b>Опубликовать сразу</b>",
                          reply_markup=user_no_time, parse_mode='HTML')
@@ -115,19 +122,32 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
 async def setting_the_desired_time(msg: Message, state: FSMContext):
     """Здесь происходит установка желаемого времени и даты публикации"""
     await state.update_data({'public_time': msg.text})
-    await state.set_state(CreatingAds.preview)
-    await preview_func(msg, state)
+    public_channels = await db.get_channels()
+    await state.set_state(CreatingAds.channel_choice)
+    await msg.answer('Теперь выберете канал для публикации:',
+                     reply_markup=await channels_choice_keys(public_channels))
 
 
 @users_router.message(CreatingAds.time_for_publication, F.text == 'Опубликовать сразу')
 async def time_error_input(msg: Message, state: FSMContext):
     """Хэндлер неверного ввода времени публикации"""
     await state.update_data({'public_time': 'None'})
+    public_channels = await db.get_channels()
+    await state.set_state(CreatingAds.channel_choice)
+    await msg.answer('Теперь выберете канал для публикации:',
+                     reply_markup=await channels_choice_keys(public_channels))
+
+
+@users_router.callback_query(CreatingAds.channel_choice, F.data.startswith('ch_id_'))
+async def catch_channel(callback: CallbackQuery, state: FSMContext):
+    """Ловим канал для публикации"""
+    await callback.answer()
+    await state.update_data({'public_channel': int(callback.data.replace('ch_id_', ''))})
     await state.set_state(CreatingAds.preview)
-    await preview_func(msg, state)
+    await preview_func(callback.message, state)
 
 
-@users_router.message(F.text == 'Отправить на модерацию')
+@users_router.message(CreatingAds.preview, F.text == 'Отправить на модерацию')
 async def send_ads_for_moderation(msg: Message, state: FSMContext):
     """Здесь мы отправляем созданное объявление на модерацию"""
     ads_items = await state.get_data()
@@ -136,13 +156,13 @@ async def send_ads_for_moderation(msg: Message, state: FSMContext):
         text=ads_items['text'],
         mediafile=ads_items['mediafile'],
         public_time=ads_items['public_time'],
-        # validity=ads_items['validity']
+        public_channel=ads_items['public_channel']
     )
     await msg.answer(text='Объявление отправлено на модерацию!', reply_markup=main_user_keyboard, parse_mode='HTML')
     await state.clear()
 
 
-@users_router.message(F.text == 'Удалить объявление')
+@users_router.message(CreatingAds.preview, F.text == 'Удалить объявление')
 async def delete_created_ads(msg: Message, state: FSMContext):
     """Данный хэндлер удаляет только что созданное объявление"""
     await msg.answer(text='Объявление удалено!', reply_markup=main_user_keyboard, parse_mode='HTML')

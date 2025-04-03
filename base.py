@@ -32,6 +32,7 @@ class BotBase:
                                      "text TEXT,"
                                      "file_id TEXT,"
                                      "user_id BIGINT,"
+                                     "public_channel BIGINT,"
                                      "public_time VARCHAR(20));")
 
             await connection.execute("CREATE TABLE IF NOT EXISTS pub_queue"
@@ -39,13 +40,20 @@ class BotBase:
                                      "text TEXT,"
                                      "file_id TEXT,"
                                      "user_id BIGINT,"
+                                     "public_channel BIGINT,"
                                      "public_time VARCHAR(20),"
                                      "time_index BIGINT);")
 
-    async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str):
+            await connection.execute("CREATE TABLE IF NOT EXISTS channels_list"
+                                     "(channel_id BIGINT PRIMARY KEY,"
+                                     "channel_name VARCHAR(155));")
+
+    async def input_ads_mod(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, public_channel: int):
         """Добавляем контейнер в таблицу модерации"""
         async with self.pool.acquire() as connection:
-            await connection.execute(f"INSERT INTO public.mod_queue (container_id, text, file_id, user_id, public_time) VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}');")
+            await connection.execute(f"INSERT INTO public.mod_queue "
+                                     f"(container_id, text, file_id, user_id, public_time, public_channel) "
+                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {public_channel});")
 
     async def remove_ads_mod(self, container_id: str):
         """Удаляем контейнер по ID"""
@@ -58,12 +66,12 @@ class BotBase:
             result = await connection.fetch(f"SELECT * FROM public.mod_queue")
             return result
 
-    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, time_index: int):
+    async def input_ads_pub(self, container_id: str, text: str, file_id: str, user_id: int, public_time: str, time_index: int, public_channel: int):
         """Добавляем контейнер в таблицу модерации"""
         async with self.pool.acquire() as connection:
             await connection.execute(f"INSERT INTO public.pub_queue"
-                                     f"(container_id, text, file_id, user_id, public_time, time_index)"
-                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {time_index})"
+                                     f"(container_id, text, file_id, user_id, public_time, time_index, public_channel)"
+                                     f"VALUES ('{container_id}', '{text}', '{file_id}', {user_id}, '{public_time}', {time_index}, {public_channel})"
                                      f"ON CONFLICT (container_id) DO UPDATE SET public_time = '{public_time}', time_index = {time_index};")
 
     async def remove_ads_pub(self, container_id: str):
@@ -76,4 +84,23 @@ class BotBase:
         async with self.pool.acquire() as connection:
             result = await connection.fetch(f"SELECT * FROM public.pub_queue")
             return result
+
+    async def add_new_channel(self, channel_id, channel_name):
+        """ Добавление нового канала для публикаций"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"INSERT INTO public.channels_list"
+                                     f"(channel_id, channel_name)"
+                                     f"VALUES ({channel_id}, '{channel_name}');")
+
+    async def get_channels(self):
+        """Достаем все каналы"""
+        async with self.pool.acquire() as connection:
+            result = await connection.fetch(f"SELECT * FROM public.channels_list")
+            return result
+
+    async def remove_channel(self, channel_id):
+        """Удаляем канал"""
+        async with self.pool.acquire() as connection:
+            await connection.execute(f"DELETE FROM public.channels_list WHERE channel_id = {channel_id};")
+
 

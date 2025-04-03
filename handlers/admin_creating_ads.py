@@ -4,15 +4,16 @@ from random import choices
 import string
 from utils import admin_router, queue_for_publication
 from keyboards import (main_admin_keyboard, admin_cancel, admin_file, admin_back,
-                       admin_file_2, admin_preview_keyboard,
+                       admin_file_2, admin_preview_keyboard, channels_choice_keys,
                        admin_create_file, admin_no_time)
 from states import AdminCreated
-from loader import bot
+from loader import bot, db
 
-from aiogram.types import Message
-from aiogram import F, html
+from aiogram.types import Message, CallbackQuery
+from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
+import arrow
 
 
 async def preview_func(msg: Message, state: FSMContext):
@@ -45,8 +46,7 @@ async def cancel(msg: Message, state: FSMContext):
 async def started_creating_ads(msg: Message, state: FSMContext):
     """Данный хэндлер запускает создание объявления"""
     await state.set_state(AdminCreated.adding_text)
-    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)'
-                          '\n❗Все ссылки вводить только прямым адресом❗\nПример: https://yandex.ru',
+    await msg.answer(text='Введите текст будущего объявления (максимум 1000 символа)',
                      reply_markup=admin_cancel, parse_mode='HTML')
 
 
@@ -99,10 +99,12 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
         await msg.answer(text='Фалов слишком много, повторите попытку', reply_markup=admin_file, parse_mode='HTML')
         await state.update_data({'mediafile': []})
     else:
-        await state.set_state(AdminCreated.preview)
-        # await preview_func(msg, state)
         await msg.answer(text="Теперь введите время и дату для публикации в следующем формате:\n"
-                              f"<b>{datetime.datetime.now().strftime('%H:%M %d.%m.%Y')}</b>\n\n"
+                              f"<code>{arrow.utcnow().now().strftime('%H:%M %d.%m.%Y')}</code>\n\n"
+                              f"Готовые варианты:\n"
+                              f"<code>{arrow.utcnow().now().shift(days=1).strftime('%H:%M %d.%m.%Y')}</code> - через сутки\n"
+                              f"<code>{arrow.utcnow().now().shift(hours=1).strftime('%H:%M %d.%m.%Y')}</code> - через час\n"
+                              f"<code>{arrow.utcnow().now().shift(minutes=10).strftime('%H:%M %d.%m.%Y')}</code> - через 10 минут\n\n"
                               f"Или нажмите <b>Опубликовать сразу</b>",
                          reply_markup=admin_no_time, parse_mode='HTML')
         await state.set_state(AdminCreated.time_for_publication)
@@ -113,16 +115,33 @@ async def end_mediafile_input(msg: Message, state: FSMContext):
 async def setting_the_desired_time(msg: Message, state: FSMContext):
     """Здесь происходит установка желаемого времени и даты публикации"""
     await state.update_data({'public_time': msg.text})
-    await state.set_state(AdminCreated.preview)
-    await preview_func(msg, state)
+    public_channels = await db.get_channels()
+    await state.set_state(AdminCreated.channel_choice)
+    await msg.answer('Теперь выберете канал для публикации:',
+                     reply_markup=await channels_choice_keys(public_channels))
+    # await state.set_state(AdminCreated.preview)
+    # await preview_func(msg, state)
 
 
 @admin_router.message(AdminCreated.time_for_publication, F.text == 'Опубликовать сразу')
 async def time_error_input(msg: Message, state: FSMContext):
     """Хэндлер неверного ввода времени публикации"""
     await state.update_data({'public_time': 'None'})
+    public_channels = await db.get_channels()
+    await state.set_state(AdminCreated.channel_choice)
+    await msg.answer('Теперь выберете канал для публикации:',
+                     reply_markup=await channels_choice_keys(public_channels))
+    # await state.set_state(AdminCreated.preview)
+    # await preview_func(msg, state)
+
+
+@admin_router.callback_query(AdminCreated.channel_choice, F.data.startswith('ch_id_'))
+async def catch_channel(callback: CallbackQuery, state: FSMContext):
+    """Ловим канал для публикации"""
+    await callback.answer()
+    await state.update_data({'public_channel': int(callback.data.replace('ch_id_', ''))})
     await state.set_state(AdminCreated.preview)
-    await preview_func(msg, state)
+    await preview_func(callback.message, state)
 
 
 @admin_router.message(AdminCreated.preview, F.text == 'Отправить на публикацию')
@@ -136,6 +155,7 @@ async def send_to_publication_queue(msg: Message, state: FSMContext):
         user_id=ads_items['user_id'],
         mediafile=ads_items['mediafile'],
         public_time=ads_items['public_time'],
+        public_channel=ads_items['public_channel'],
         time_index=int(datetime.datetime.strptime(ads_items['public_time'], "%H:%M %d.%m.%Y").timestamp())
         if ads_items['public_time'] != 'None' else None
     )

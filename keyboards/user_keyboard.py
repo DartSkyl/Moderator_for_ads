@@ -1,4 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 kb_buttons = [
@@ -51,3 +52,12 @@ preview_keyboard = ReplyKeyboardMarkup(
         ],
         resize_keyboard=True
 )
+
+
+async def channels_choice_keys(channels_list):
+    """Возвращает клавиатуру с каналами для публикаций"""
+    ch_keys = InlineKeyboardBuilder()
+    for c in channels_list:
+        ch_keys.button(text=f'{c[1]}', callback_data=f'ch_id_{c[0]}')
+    ch_keys.adjust(1)
+    return ch_keys.as_markup()

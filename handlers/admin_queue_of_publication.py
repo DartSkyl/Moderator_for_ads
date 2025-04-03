@@ -6,7 +6,7 @@ from states import ModerationAds
 from loader import bot, db
 
 from aiogram.types import Message
-from aiogram import F, html
+from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
 
